@@ -1,0 +1,14 @@
+services:
+  nash-marketing:
+    build: .
+    ports:
+      - "8000:8000"
+    environment:
+      - DATABASE_URL=sqlite:///./data/nash_marketing.db
+      - LLM_BACKEND=mock
+      - APP_HOST=0.0.0.0
+      - APP_PORT=8000
+      - LOG_LEVEL=INFO
+    volumes:
+      - ./data:/app/data
+    restart: unless-stopped
