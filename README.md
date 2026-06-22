@@ -1,29 +1,25 @@
-# 🏛️ Nash Marketing Agents
 
-**Multi-Agent Competitive Ad Auction with Nash Equilibrium**
 
-&gt; *"We need builders who ship. Not prototypes. Not demos."*
+
+<p align="center"><b>Multi-Agent Competitive Ad Auction with Nash Equilibrium</b></p>
+
+<p align="center"><sub>FastAPI · SQLAlchemy · SciPy · Docker · pytest · Chart.js</sub></p>
+
+<p align="center">
+  <img src="https://img.shields.io/badge/Status-🚀%20Production%20Ready-brightgreen" alt="Production Ready">
+  <img src="https://img.shields.io/badge/Python-3.12+-blue?logo=python" alt="Python">
+  <img src="https://img.shields.io/badge/FastAPI-0.110+-teal?logo=fastapi" alt="FastAPI">
+  <img src="https://img.shields.io/badge/SQLAlchemy-2.0+-orange?logo=sqlalchemy" alt="SQLAlchemy">
+  <img src="https://img.shields.io/badge/SciPy-1.10+-blueviolet?logo=scipy" alt="SciPy">
+  <img src="https://img.shields.io/badge/Docker-Ready-blue?logo=docker" alt="Docker">
+  <img src="https://img.shields.io/badge/Tests-36%20passing-brightgreen" alt="Tests">
+  <img src="https://img.shields.io/badge/LLM-Mock%20%7C%20Transformers-yellow" alt="LLM">
+  <img src="https://img.shields.io/badge/License-MIT-green" alt="MIT">
+</p>
 
 ---
 
-## What This Is
-
-Autonomous AI brand agents compete in real-time ad auctions. Each agent uses an LLM to formulate bidding strategy, then a game-theoretic Nash equilibrium solver computes optimal mixed strategies. Budget guardrails prevent catastrophic depletion.
-
-**Built entirely with AI as the primary development interface** — every file was designed, coded, and iterated using Claude Code and Cursor.
-
----
-
-## 🎯 Why This Matters for the Role
-
-| Job Requirement | How This Project Delivers |
-|:---|:---|
-| **Ship end-to-end** | Idea → Architecture → Implementation → Docker Deployment → Dashboard |
-| **Production software** | FastAPI + PostgreSQL/SQLite + pytest (36 tests) + Docker + real API |
-| **Full-stack builder** | Backend (Python) + API (FastAPI) + Database (SQLAlchemy) + Frontend (vanilla JS + Chart.js) + Deployment (Docker) |
-| **AI-first development** | LLM is the PRIMARY bidding strategist; documented AI workflow |
-| **Autonomous agents** | Self-correcting multi-agent system with continuous simulation |
-| **AI reviews AI** | Guardrails audit agent decisions; Nash solver validates strategies |
+Autonomous AI brand agents compete in real-time ad auctions. Each agent uses an LLM to formulate bidding strategy, then a **game-theoretic Nash equilibrium** solver **computes optimal mixed strategies**. Budget guardrails prevent catastrophic depletion.
 
 ---
 
@@ -31,13 +27,13 @@ Autonomous AI brand agents compete in real-time ad auctions. Each agent uses an 
 
 1.An agentic AI system is defined by autonomous entities that perceive, decide, and act in an environment with persistent goals. Our system satisfies all four criteria:
 
-```Table
-Criterion	Implementation	Evidence
-Perception	Agents observe market state (clearing price, competitor count, win rate)	BrandAgent.decide_bid(market_price, competitor_count, ...)
-Decision	LLM-powered strategic reasoning with structured JSON output	LLMEngine.chat_completion() generates bid strategy
-Action	Agents submit bids to auction engine	AuctionEngine.run_round() executes bids
-Persistent goals	Budget preservation, CPA targets, win rate optimization	AgentState tracks cumulative performance
-```
+| Criterion | Implementation | Evidence |
+|:---|:---|:---|
+| **Perception** | Agents observe market state (clearing price, competitor count, win rate) | `BrandAgent.decide_bid(market_price, competitor_count, ...)` |
+| **Decision** | LLM-powered strategic reasoning with structured JSON output | `LLMEngine.chat_completion()` generates bid strategy |
+| **Action** | Agents submit bids to auction engine | `AuctionEngine.run_round()` executes bids |
+| **Persistent goals** | Budget preservation, CPA targets, win rate optimization | `AgentState` tracks cumulative performance |
+
 Unlike simple API wrappers, these agents maintain state across rounds, adapt strategy based on outcomes, and operate without human intervention — the definition of autonomy.
 
 2. Architecture Paradigm: Neuro-Symbolic with Game-Theoretic Orchestration
@@ -136,7 +132,7 @@ source venv/bin/activate
 pip install -r requirements.txt
 uvicorn api.main:app --reload
 ```
-📊 Dashboard Features
+### 📊 Dashboard Features
 - System Health: Real-time API, LLM backend, and database status
 - Quick Stats: Total simulations, last clearing price, total revenue
 - Run Simulation: Configure agents, rounds, and strategies
@@ -170,35 +166,38 @@ Analyze: Dashboard visualizes budget curves, win rates, and price history
 
 ## 🔮 Future Integration
 This project is designed to integrate with https://github.com/aragit/autonomous-procurement-swarm:
-```Table
-Procurement Swarm	Nash Marketing Agents	Integration
-Bilateral negotiation	N-player competitive auction	Shared LLM engine
-Buyer vs. Seller	Brand vs. Brand	Shared PostgreSQL ledger
-Pareto efficiency	Nash equilibrium	Unified dashboard
-Cost minimization	Budget preservation	Cross-domain analytics
-```
+| Procurement Swarm | Nash Marketing Agents | Integration |
+|:---|:---|:---|
+| Bilateral negotiation | N-player competitive auction | Shared LLM engine |
+| Buyer vs. Seller | Brand vs. Brand | Shared PostgreSQL ledger |
+| Pareto efficiency | Nash equilibrium | Unified dashboard |
+| Cost minimization | Budget preservation | Cross-domain analytics |
+
 ## 📦 Tech Stack
-```Table
-Layer	Technology
-LLM	MockLLM (default) / Transformers CPU (optional)
-Math	NumPy + SciPy (Nash equilibrium, optimization)
-Database	SQLite (local) / PostgreSQL (production)
-API	FastAPI + Pydantic v2
-ORM	SQLAlchemy 2.0
-Dashboard	Vanilla JS + Chart.js
-Container	Docker + docker-compose
-Testing	pytest + pytest-asyncio
-```
+## 📦 Tech Stack
+
+| Layer | Technology |
+|:---|:---|
+| **LLM** | MockLLM (default) / Transformers CPU (optional) |
+| **Math** | NumPy + SciPy (Nash equilibrium, optimization) |
+| **Database** | SQLite (local) / PostgreSQL (production) |
+| **API** | FastAPI + Pydantic v2 |
+| **ORM** | SQLAlchemy 2.0 |
+| **Dashboard** | Vanilla JS + Chart.js |
+| **Container** | Docker + docker-compose |
+| **Testing** | pytest + pytest-asyncio |
 
 ## 📝 API Endpoints
-Table
-Method	Endpoint	Description
-GET	/health	System health check
-POST	/simulation/run	Run new auction simulation
-GET	/simulations	List all simulations
-GET	/simulation/{id}	Get simulation details
-POST	/nash/compute	Compute Nash equilibrium
+## 📝 API Endpoints
 
+| Method | Endpoint | Description |
+|:---|:---|:---|
+| GET | `/health` | System health check |
+| POST | `/simulation/run` | Run new auction simulation |
+| GET | `/simulations` | List all simulations |
+| GET | `/simulation/{id}` | Get simulation details |
+| POST | `/nash/compute` | Compute Nash equilibrium |
 
 **📄 License**
+
 MIT
