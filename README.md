@@ -36,14 +36,14 @@ Autonomous AI brand agents compete in real-time ad auctions. Each agent uses an 
 
 Unlike simple API wrappers, these agents maintain state across rounds, adapt strategy based on outcomes, and operate without human intervention — the definition of autonomy.
 
-2. Architecture Paradigm: Neuro-Symbolic with Game-Theoretic Orchestration
+2.Architecture Paradigm: Neuro-Symbolic with Game-Theoretic Orchestration
 
 ```text
 
 ┌─────────────────────────────────────────────────────────────────────────────┐
-│                    NEURO-SYMBOLIC ARCHITECTURE                               │
+│                    NEURO-SYMBOLIC ARCHITECTURE                              │
 ├─────────────────────────────────────────────────────────────────────────────┤
-│                                                                              │
+│                                                                             │
 │  ┌─────────────────────┐        ┌─────────────────────┐                     │
 │  │   NEURAL (LLM)      │        │   SYMBOLIC (Math)   │                     │
 │  │                     │        │                     │                     │
@@ -53,8 +53,8 @@ Unlike simple API wrappers, these agents maintain state across rounds, adapt str
 │  │  • Context aware    │        │  • Probabilistic    │                     │
 │  │                     │        │    inference        │                     │
 │  └─────────────────────┘        └─────────────────────┘                     │
-│           │                              │                                   │
-│           └──────────────┬───────────────┘                                   │
+│           │                              │                                  │
+│           └──────────────┬───────────────┘                                  │
 │                          │                                                  │
 │                          ▼                                                  │
 │               ┌─────────────────────┐                                       │
@@ -62,16 +62,17 @@ Unlike simple API wrappers, these agents maintain state across rounds, adapt str
 │               │  Layer              │                                       │
 │               │                     │                                       │
 │               │  LLM proposes →     │                                       │
-│               │  Symbolic validates → │                                       │
-│               │  Guardrail enforces   │                                       │
+│               │  Symbolic validates → │                                     │
+│               │  Guardrail enforces   │                                     │
 │               └─────────────────────┘                                       │
-│                                                                              │
+│                                                                             │
 └─────────────────────────────────────────────────────────────────────────────┘
 ```
 *The LLM is the "intuition" — it generates creative bidding strategies. The Nash solver is the "logic" — it proves no agent can improve by deviating. The guardrail is the "conscience" — it prevents self-destructive behavior.*
 
-3. The Nash Algorithm: Why Game Theory Matters
+3.The Nash Algorithm: Why Game Theory Matters
 #### The Problem: The Tragedy of the Commons in Ad Auctions
+
 **Without equilibrium analysis, agents engage in destructive bidding wars:**
 
 Scenario: 3 brands, 100 impressions/day, each with $5000 budget
@@ -126,6 +127,7 @@ docker-compose up --build
 Open http://localhost:8000 for the dashboard.
 
 **Local Development**
+
 ```bash
 python -m venv venv
 source venv/bin/activate
@@ -173,7 +175,7 @@ This project is designed to integrate with https://github.com/aragit/autonomous-
 | Pareto efficiency | Nash equilibrium | Unified dashboard |
 | Cost minimization | Budget preservation | Cross-domain analytics |
 
-## 📦 Tech Stack
+
 ## 📦 Tech Stack
 
 | Layer | Technology |
@@ -187,7 +189,7 @@ This project is designed to integrate with https://github.com/aragit/autonomous-
 | **Container** | Docker + docker-compose |
 | **Testing** | pytest + pytest-asyncio |
 
-## 📝 API Endpoints
+
 ## 📝 API Endpoints
 
 | Method | Endpoint | Description |
