@@ -65,48 +65,29 @@ This project replaces guesswork with mathematical guarantees. It simulates how r
 
 ### 1. Agentic AI Criteria
 
-An agentic AI system is defined by autonomous entities that perceive, decide, and act in an environment with persistent goals. Our system satisfies all four criteria:
+An agentic AI system is defined by autonomous entities that perceive, decide, and act in an environment with persistent goals. Our system satisfies all six criteria:
 
 | Criterion | Implementation | Evidence |
 |:---|:---|:---|
-| **Perception** | Agents observe market state (clearing price, competitor count, win rate) | `BrandAgent.decide_bid()` receives market context |
-| **Decision** | LLM-powered strategic reasoning with structured JSON output | `LLMEngine.chat_completion()` generates bid strategy |
-| **Action** | Agents submit bids to auction engine | `AuctionEngine.run_round()` executes bids |
-| **Persistent goals** | Budget preservation, CPA targets, win rate optimization | `AgentState` tracks cumulative performance across rounds |
+| **Perception** | Agents observe market state (clearing price, competitor count, win rate, remaining budget) | `BrandAgent.decide_bid()` receives `MarketContext` with full market snapshot |
+| **Decision** | LLM-powered strategic reasoning with structured JSON output | `LLMEngine.chat_completion()` generates bid strategy with role-appropriate bid percentage |
+| **Action** | Agents submit bids to auction engine, pay clearing prices | `AuctionEngine.run_round()` executes VCG allocation and collects payments |
+| **Persistent goals** | Budget preservation, CPA targets, win rate optimization over multiple rounds | `AgentState` tracks cumulative spend, conversions, win rate across entire campaign |
+| **Memory** | Agents recall past round outcomes to adapt strategy | Round history fed into each LLM prompt as prior context |
+| **Adaptation** | Strategy shifts dynamically based on market feedback | Agents adjust bid aggressiveness when over/under-performing CPA targets |
 
-Unlike simple API wrappers, these agents maintain state across rounds, adapt strategy based on outcomes, and operate without human intervention — the definition of autonomy.
+Unlike simple API wrappers, these agents:
+
+- **Maintain state** across rounds (cumulative spend, conversions, win rate trajectory)
+- **Adapt strategy** based on outcomes (LLM adjusts bid percentage when CPA targets drift)
+- **Operate autonomously** without human intervention for the full simulation lifecycle
+- **Face competitive pressure** from other agents, creating emergent market dynamics
 
 ### 2. Neuro-Symbolic Paradigm
 
-```
-┌─────────────────────────────────────────────────────────────────────────────┐
-│                    NEURO-SYMBOLIC ARCHITECTURE                              │
-├─────────────────────────────────────────────────────────────────────────────┤
-│                                                                             │
-│  ┌─────────────────────┐        ┌─────────────────────┐                     │
-│  │   NEURAL (LLM)      │        │   SYMBOLIC (Math)   │                     │
-│  │                     │        │                     │                     │
-│  │  • Pattern matching │◄──────►│  • Nash equilibrium │                     │
-│  │  • Strategy gen     │        │  • Linear programs  │                     │
-│  │  • Natural lang     │        │  • Constraint opt   │                     │
-│  │  • Context aware    │        │  • Probabilistic    │                     │
-│  │                     │        │    inference        │                     │
-│  └─────────────────────┘        └─────────────────────┘                     │
-│           │                              │                                  │
-│           └──────────────┬───────────────┘                                  │
-│                          │                                                  │
-│                          ▼                                                  │
-│               ┌─────────────────────┐                                       │
-│               │  HYBRID REASONING   │                                       │
-│               │  Layer              │                                       │
-│               │                     │                                       │
-│               │  LLM proposes →     │                                       │
-│               │  Symbolic validates │                                       │
-│               │  Guardrail enforces │                                       │
-│               └─────────────────────┘                                       │
-│                                                                             │
-└─────────────────────────────────────────────────────────────────────────────┘
-```
+<p align="center">
+  <img src="assets/Agentic_Nash.jpeg" alt="Agentic Nash Architecture" width="700px">
+</p>
 
 > The LLM is the **intuition** — it generates creative bidding strategies. The Nash solver is the **logic** — it proves no agent can improve by deviating. The guardrail is the **conscience** — it prevents self-destructive behavior.
 
