@@ -58,6 +58,16 @@ class AuctionEngine:
         # Sort by bid (highest first)
         bids.sort(key=lambda x: x[1], reverse=True)
 
+        # Trace: log all bids before clearing
+        bid_trace = ", ".join(f"{a.name}=${b:.2f}" for a, b in bids)
+        logger.debug(
+            f"[Round {market.round_number}] Bids: {bid_trace} | "
+            f"Impressions: {market.available_impressions} | "
+            f"Clearing price candidate: ${bids[market.available_impressions][1]:.2f}"
+            if len(bids) > market.available_impressions
+            else f"Impressions: {market.available_impressions} | All win (no losing bid)"
+        )
+
         # Determine winners (second-price mechanism)
         winners_data: List[Dict[str, Any]] = []
         losers_data: List[Dict[str, Any]] = []
@@ -110,11 +120,25 @@ class AuctionEngine:
         )
 
         self.history.append(result)
+
+        # Trace: verify VCG math — winner pays ≤ own bid
+        for w in winners_data:
+            assert w["paid"] <= w["bid"] + 0.01, (
+                f"VCG VIOLATION: {w['agent_name']} paid ${w['paid']:.2f} > bid ${w['bid']:.2f}"
+            )
+
         logger.info(
             f"[Auction Round {market.round_number}] "
             f"Clearing: ${result.clearing_price:.2f} | "
             f"Winners: {len(winners_data)} | "
             f"Revenue: ${total_revenue:.2f}"
+        )
+        logger.debug(
+            f"[Round {market.round_number} payments] " +
+            " | ".join(
+                f"{w['agent_name']}: bid=${w['bid']:.2f} paid=${w['paid']:.2f}"
+                for w in winners_data
+            )
         )
 
         return result

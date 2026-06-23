@@ -10,7 +10,7 @@
   <img src="https://img.shields.io/badge/SQLAlchemy-2.0+-orange?logo=sqlalchemy" alt="SQLAlchemy">
   <img src="https://img.shields.io/badge/SciPy-1.10+-blueviolet?logo=scipy" alt="SciPy">
   <img src="https://img.shields.io/badge/Docker-Ready-blue?logo=docker" alt="Docker">
-  <img src="https://img.shields.io/badge/Tests-36%20passing-brightgreen" alt="Tests">
+  <img src="https://img.shields.io/badge/Tests-43%20passing-brightgreen" alt="Tests">
   <img src="https://img.shields.io/badge/LLM-Mock%20%7C%20Transformers-yellow" alt="LLM">
   <img src="https://img.shields.io/badge/License-MIT-green" alt="MIT">
 </p>
@@ -219,6 +219,7 @@ pytest tests/ -v
 |:-------|:------|:----------------|
 | `tests/test_agents.py` | 9 | Agent initialization, bid generation, state updates, CPA calculation |
 | `tests/test_auction.py` | 6 | Empty auction, scarce supply, clearing price, revenue matching, budget depletion |
+| `tests/test_properties.py` | 7 | **Monotonicity** (higher CPA → higher win rate), **Individual rationality** (no overpay, budget guardrails), **Nash bounds** (convergence, expected bid ≤ valuation) |
 | `tests/test_nash.py` | 6 | Convergence, strategy validity, expected bid ranges, clearing price bounds |
 | `tests/test_guardrails.py` | 8 | Soft warning, hard cap, emergency mode, system status aggregation |
 | `tests/test_api.py` | 7 | Health endpoint, simulation lifecycle, Nash compute, error handling |
@@ -274,7 +275,7 @@ This project is designed to integrate with [autonomous-procurement-swarm](https:
 5. Push: `git push origin feat/your-feature`
 6. Open a Pull Request against `main`
 
-Please ensure all 36 tests pass before submitting.
+Please ensure all 43 tests pass before submitting.
 
 ---
 
