@@ -63,7 +63,7 @@ This project replaces guesswork with mathematical guarantees. It simulates how r
 
 ## 🏗️ Architecture
 
-### 1. Agentic AI Criteria
+### **1. Agentic AI Criteria**
 
 An agentic AI system is defined by autonomous entities that perceive, decide, and act in an environment with persistent goals. Our system satisfies all six criteria:
 
@@ -83,9 +83,9 @@ Unlike simple API wrappers, these agents:
 - **Operate autonomously** without human intervention for the full simulation lifecycle
 - **Face competitive pressure** from other agents, creating emergent market dynamics
 
-### 2. Neuro-Symbolic Paradigm
+### **2. Neuro-Symbolic Paradigm**
 
-**NEURAL (LLM) POD Cluster (core/llm_engine.py)**
+**1. NEURAL (LLM) POD Cluster (core/llm_engine.py)**
 
 The left cluster is the Neural Strategic Reasoning (LLM) engine, providing dynamic, stochastic strategy generation based on pattern matching and contextual awareness.
 
@@ -95,7 +95,7 @@ The left cluster is the Neural Strategic Reasoning (LLM) engine, providing dynam
 
 *Stochastic Proposals:* The engine generates non-deterministic strategy proposals (JSON). For example, an aggressive persona chooses a high bid multiplier (uniform(0.70, 0.95)) to maximize pattern matching for acquisition.
 
-**SYMBOLIC (Math) POD Cluster (core/nash_solver.py)**
+**2. SYMBOLIC (Math) POD Cluster (core/nash_solver.py)**
 
 The right cluster is the NashEquilibriumOptimization system. This is the symbolic counterpart, defining mathematical guarantees, linear constraints, and optimal mixed-strategy equilibrium conditions.
 
@@ -105,7 +105,7 @@ The right cluster is the NashEquilibriumOptimization system. This is the symboli
 
 *Solver Convergence:* The core of the solver relies on a softmax transformation with temperature annealing. Iterative loops continue (iter &lt; 100) until the standard symbolic criteria—convergence &lt; 0.01—is met.
 
-**HYBRID REASONING Layer POD (core/agents.py &amp; core/guardrails.py)**
+**3. HYBRID REASONING Layer POD (core/agents.py &amp; core/guardrails.py)**
 
 The central bottom cluster shows the core/agents.py, core/guardrails.py, and core/auction.py modules collaborating to enforce the neuro-symbolic feedback loop.
 
@@ -161,12 +161,12 @@ for iteration in range(max_iterations):
 
 ```text
 ┌──────────┐    ┌──────────┐    ┌──────────┐    ┌──────────┐    ┌──────────┐
-│ Configure │───▶│ Simulate │───▶│  Auction │───▶│   Nash   │───▶│ Analyze  │
-│  Agents   │    │  Rounds  │    │ (VCG)    │    │  Solver  │    │Dashboard │
+│ Configure│───▶│ Simulate │───▶│  Auction │───▶│   Nash   │───▶│ Analyze  │
+│  Agents  │    │  Rounds  │    │ (VCG)    │    │  Solver  │    │Dashboard │
 └──────────┘    └──────────┘    └──────────┘    └──────────┘    └──────────┘
      │               │               │               │               │
-     │ Brand names   │ LLM decides   │ 2nd-price     │ Mixed-strategy│ Chart.js   │
-     │ Budgets, CPAs │ bids per round│ allocation    │ equilibrium   │ visuals    │
+     │ Brand names   │ LLM decides   │ 2nd-price     │ Mixed-strategy│ Chart.js  │
+     │ Budgets, CPAs │ bids per round│ allocation    │ equilibrium   │ visuals   │
      └───────────────┴───────────────┴───────────────┴───────────────┴───────────┘
 ```
 
