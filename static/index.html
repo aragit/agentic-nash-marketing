@@ -170,7 +170,7 @@
                             <option value="balanced">Balanced</option>
                             <option value="conservative">Conservative</option>
                         </select>
-                        <input type="number" placeholder="Budget" value="200" />
+                        <input type="number" placeholder="Budget" value="120" />
                         <input type="number" placeholder="CPA" value="15" />
                     </div>
                     <div class="agent-row">
@@ -180,7 +180,7 @@
                             <option value="balanced" selected>Balanced</option>
                             <option value="conservative">Conservative</option>
                         </select>
-                        <input type="number" placeholder="Budget" value="100" />
+                        <input type="number" placeholder="Budget" value="200" />
                         <input type="number" placeholder="CPA" value="35" />
                     </div>
                     <div class="agent-row">
@@ -190,7 +190,7 @@
                             <option value="balanced">Balanced</option>
                             <option value="conservative" selected>Conservative</option>
                         </select>
-                        <input type="number" placeholder="Budget" value="50" />
+                        <input type="number" placeholder="Budget" value="300" />
                         <input type="number" placeholder="CPA" value="80" />
                     </div>
                 </div>
@@ -394,23 +394,43 @@
                     }
                 });
 
-                // Win rate chart
+                // Win rate chart — bar chart (independent per-agent, not parts-of-whole)
                 const winRates = data.agents.map(a => (a.win_rate || 0) * 100);
-                const totalWin = winRates.reduce((s, v) => s + v, 0) || 1;
                 const colors = data.agents.map((_, i) =>
                     ['#38bdf8', '#a78bfa', '#fbbf24', '#f87171', '#4ade80'][i % 5]
                 );
+                const borderColors = data.agents.map((_, i) =>
+                    ['#0284c7', '#7c3aed', '#d97706', '#dc2626', '#16a34a'][i % 5]
+                );
                 if (winrateChart) winrateChart.destroy();
                 winrateChart = new Chart(document.getElementById('winrate-chart'), {
-                    type: 'doughnut',
+                    type: 'bar',
                     data: {
-                        labels: agentNames.map((n, i) => `${n} (${winRates[i].toFixed(0)}%)`),
-                        datasets: [{ data: winRates, backgroundColor: colors }]
+                        labels: agentNames,
+                        datasets: [{
+                            label: 'Win Rate (%)',
+                            data: winRates,
+                            backgroundColor: colors,
+                            borderColor: borderColors,
+                            borderWidth: 2,
+                            borderRadius: 4,
+                        }]
                     },
                     options: {
                         responsive: true,
                         maintainAspectRatio: false,
-                        plugins: { legend: { labels: { color: '#e2e8f0' } } }
+                        scales: {
+                            y: { min: 0, max: 100, ticks: { color: '#94a3b8', callback: v => v + '%' } },
+                            x: { ticks: { color: '#94a3b8' } }
+                        },
+                        plugins: {
+                            legend: { display: false },
+                            tooltip: {
+                                callbacks: {
+                                    label: ctx => `Win Rate: ${ctx.raw.toFixed(1)}%`
+                                }
+                            }
+                        }
                     }
                 });
 

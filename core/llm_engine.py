@@ -70,8 +70,9 @@ class MockLLMEngine(BaseLLMEngine):
         remaining = self._extract_float(system_prompt, "remaining: $")
         market_price = self._extract_float(system_prompt, "market price: $")
         win_rate = self._extract_float(system_prompt, "win rate:")
+        target_cpa = self._extract_float(system_prompt, "target CPA (cost per acquisition): $")
 
-        content = self._generate_strategy(role, budget, remaining, market_price, win_rate)
+        content = self._generate_strategy(role, budget, remaining, market_price, win_rate, target_cpa)
 
         latency_ms = (time.time() - start) * 1000
 
@@ -107,29 +108,25 @@ class MockLLMEngine(BaseLLMEngine):
             return 0.0
 
     def _generate_strategy(
-        self, role: str, budget: float, remaining: float, market_price: float, win_rate: float
+        self, role: str, budget: float, remaining: float, market_price: float, win_rate: float, target_cpa: float
     ) -> str:
+        # Base bid on target CPA (willingness to pay), not market price
         if role == "aggressive":
-            bid_multiplier = self.rng.uniform(1.05, 1.20)
-            justification = "Aggressive market capture: outbidding competitors to secure impressions"
+            bid_pct = self.rng.uniform(0.50, 0.70)
+            justification = "Aggressive market capture: bidding near valuation to win impressions"
         elif role == "conservative":
-            bid_multiplier = self.rng.uniform(0.85, 0.95)
+            bid_pct = self.rng.uniform(0.20, 0.40)
             justification = "Conservative ROI focus: minimizing CPA while maintaining presence"
         else:
-            bid_multiplier = self.rng.uniform(0.95, 1.05)
+            bid_pct = self.rng.uniform(0.30, 0.55)
             justification = "Balanced approach: competitive bidding with budget awareness"
 
-        bid = round(market_price * bid_multiplier, 2) if market_price > 0 else round(self.rng.uniform(1.0, 5.0), 2)
-
-        # Budget guardrail in mock logic
-        if remaining > 0 and bid > remaining * 0.1:
-            bid = round(remaining * 0.05, 2)
-            justification += " [GUARDRAIL: Bid capped at 5% of remaining budget]"
+        bid = round(max(target_cpa, 1.0) * bid_pct, 2) if target_cpa > 0 else round(market_price, 2)
 
         return json.dumps({
             "bid": bid,
             "max_daily_spend": round(remaining * 0.15, 2) if remaining > 0 else 100.0,
-            "target_cpa": round(bid * self.rng.uniform(0.8, 1.2), 2),
+            "target_cpa": round(target_cpa * self.rng.uniform(0.9, 1.1), 2),
             "strategy": role,
             "justification": justification,
         })

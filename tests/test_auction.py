@@ -18,9 +18,9 @@ class TestAuctionEngine:
     def three_agents(self):
         llm = MockLLMEngine(seed=42)
         return [
-            BrandAgent("Nike", "aggressive", 5000, 30, llm),
+            BrandAgent("Nike", "aggressive", 5000, 15, llm),
             BrandAgent("Adidas", "balanced", 5000, 35, llm),
-            BrandAgent("Puma", "conservative", 5000, 40, llm),
+            BrandAgent("Puma", "conservative", 5000, 80, llm),
         ]
 
     def test_empty_auction(self, engine):
