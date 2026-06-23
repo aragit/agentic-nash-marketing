@@ -10,7 +10,7 @@
   <img src="https://img.shields.io/badge/SQLAlchemy-2.0+-orange?logo=sqlalchemy" alt="SQLAlchemy">
   <img src="https://img.shields.io/badge/SciPy-1.10+-blueviolet?logo=scipy" alt="SciPy">
   <img src="https://img.shields.io/badge/Docker-Ready-blue?logo=docker" alt="Docker">
-  <img src="https://img.shields.io/badge/Tests-43%20passing-brightgreen" alt="Tests">
+  <img src="https://img.shields.io/badge/Tests-49%20passing-brightgreen" alt="Tests">
   <img src="https://img.shields.io/badge/LLM-Mock%20%7C%20Transformers-yellow" alt="LLM">
   <img src="https://img.shields.io/badge/License-MIT-green" alt="MIT">
 </p>
@@ -190,10 +190,20 @@ uvicorn api.main:app --reload
 | **Quick Stats** | Total simulations, last clearing price, cumulative revenue |
 | **Run Simulation** | Configure agent count, strategies, budgets, CPA targets, rounds |
 | **Budget Depletion Chart** | Grouped bar chart of amount spent vs remaining per agent |
-| **Win Rate Chart** | Doughnut chart of auction success percentage per brand |
+| **Agent Performance (Radar)** | Multi-dimensional radar of win rate, budget utilization, CPA efficiency |
 | **Clearing Price History** | Line chart of market dynamics across rounds |
-| **Nash Equilibrium Chart** | Expected bid distribution per agent at equilibrium |
+| **Bid Range per Agent** | Min/avg/max bid range per agent |
+| **Cumulative Spend** | Per-agent spend trajectory across rounds |
+| **Nash Equilibrium (Polar Area)** | Expected bid distribution per agent at equilibrium |
 | **Event Log** | Real-time stream of simulation events and agent decisions |
+
+<p align="center">
+  <img src="assets/run_simu.png" alt="Run Simulation Form" width="600px">
+</p>
+
+<p align="center">
+  <img src="assets/run_charts.png" alt="Simulation Charts" width="900px">
+</p>
 
 ---
 
@@ -203,7 +213,7 @@ uvicorn api.main:app --reload
 2. **Simulate** — Each round, every agent queries its LLM with current market context (clearing price, competitor count, win rate, remaining budget) and receives a structured bid decision in JSON.
 3. **Auction** — A second-price VCG auction allocates impressions to the highest bidders. Winners pay the next-highest bid. Budget guardrails cap per-round spend at 20% of remaining budget.
 4. **Equilibrium** — After all rounds complete, the Nash solver iteratively computes optimal mixed strategies using softmax best-response dynamics with temperature annealing.
-5. **Analyze** — The dashboard renders four charts (budget, win rate, clearing price, Nash equilibrium) and an event log for post-hoc analysis.
+5. **Analyze** — The dashboard renders six charts (budget, agent performance radar, clearing price, bid range, cumulative spend, Nash equilibrium polar area) and an event log for post-hoc analysis.
 
 ---
 
@@ -213,7 +223,7 @@ uvicorn api.main:app --reload
 pytest tests/ -v
 ```
 
-36 tests covering:
+49 tests covering:
 
 | Module | Tests | What's Verified |
 |:-------|:------|:----------------|
@@ -223,6 +233,7 @@ pytest tests/ -v
 | `tests/test_nash.py` | 6 | Convergence, strategy validity, expected bid ranges, clearing price bounds |
 | `tests/test_guardrails.py` | 8 | Soft warning, hard cap, emergency mode, system status aggregation |
 | `tests/test_api.py` | 7 | Health endpoint, simulation lifecycle, Nash compute, error handling |
+| `tests/test_e2e.py` | 6 | Full simulation lifecycle, role differentiation, budget guardrails, clearing price history, Nash equilibrium validation |
 
 ---
 
@@ -275,7 +286,7 @@ This project is designed to integrate with [autonomous-procurement-swarm](https:
 5. Push: `git push origin feat/your-feature`
 6. Open a Pull Request against `main`
 
-Please ensure all 43 tests pass before submitting.
+Please ensure all 49 tests pass before submitting.
 
 ---
 
