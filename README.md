@@ -1,4 +1,4 @@
-# 🏛️ Agentic Nash Marketing
+<p align="center"><b>🏛️ Agentic Nash Marketing</b></p>
 <p align="center"><b>Multi-Agent Competitive Ad Auction with Nash Equilibrium</b></p>
 
 <p align="center"><sub>FastAPI · SQLAlchemy · SciPy · Docker · pytest · Chart.js</sub></p>
