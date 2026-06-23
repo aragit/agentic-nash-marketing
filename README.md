@@ -85,11 +85,43 @@ Unlike simple API wrappers, these agents:
 
 ### 2. Neuro-Symbolic Paradigm
 
+**NEURAL (LLM) POD Cluster (core/llm_engine.py)**
+
+The left cluster is the Neural Strategic Reasoning (LLM) engine, providing dynamic, stochastic strategy generation based on pattern matching and contextual awareness.
+
+*Responsibility:* The LLMEngineFactory (llm_engine.py) initializes either the rapid, deterministic MockLLMEngine or the slower, CPU-based TransformersEngine.
+
+*Prompt context:* When an agent acts (agents.py), it renders the BrandPrompt (prompts.py). This injects natural language context—brand name, current win_rate (0.00 to 1.00), available impressions, competitor count, and full state history—into the LLM for strategy generation.
+
+*Stochastic Proposals:* The engine generates non-deterministic strategy proposals (JSON). For example, an aggressive persona chooses a high bid multiplier (uniform(0.70, 0.95)) to maximize pattern matching for acquisition.
+
+**SYMBOLIC (Math) POD Cluster (core/nash_solver.py)**
+
+The right cluster is the NashEquilibriumOptimization system. This is the symbolic counterpart, defining mathematical guarantees, linear constraints, and optimal mixed-strategy equilibrium conditions.
+
+*Staggered Win Probability:* The conceptual diagram notes probabilistic inference. When deterministic bidding loops failed in testing, the solution was moving to an iterative best-response solver with Monte Carlo noise. The NashEquilibriumSolver (nash_solver.py) now runs Monte Carlo simulations (5000 samples) to compute smooth, probabilistic win curves for any given bid level, enabling the staggered equilibrium requested by the developer.
+
+*Expected Utility:* The solver calculates an agent's Expected Utility = (Valuation - Bid) × WinProbability.
+
+*Solver Convergence:* The core of the solver relies on a softmax transformation with temperature annealing. Iterative loops continue (iter &lt; 100) until the standard symbolic criteria—convergence &lt; 0.01—is met.
+
+**HYBRID REASONING Layer POD (core/agents.py &amp; core/guardrails.py)**
+
+The central bottom cluster shows the core/agents.py, core/guardrails.py, and core/auction.py modules collaborating to enforce the neuro-symbolic feedback loop.
+
+*Initialization (Hybrid Flow):* A POST /simulation/run (api/main.py) starts an async execution.
+
+*Proposal (Neural → Hybrid):* The autonomous BrandAgent (agents.py) requests a bid decision. The Neural (LLM) Pod proposes a strategy (bid amount, spend cap).
+
+*Validation (Hybrid → Symbolic):* The symbolic pod validates the proposal. The BudgetGuardrail (guardrails.py) enforces a strict linear constraint: the raw bid is capped at a hard threshold (remaining × 0.2 per bid) to prevent catastrophic depletion.
+
+*Enforcement (Orchestration):* The finalized, validated bids move into the AuctionEngine (auction.py), which resolves the mechanics (Symbolic/Logic, VCG second-price format).
+
 <p align="center">
   <img src="assets/Agentic_Nash.jpeg" alt="Agentic Nash Architecture" width="700px">
 </p>
 
-> The LLM is the **intuition** — it generates creative bidding strategies. The Nash solver is the **logic** — it proves no agent can improve by deviating. The guardrail is the **conscience** — it prevents self-destructive behavior.
+This diagram shows how the conceptual Neuro-Symbolic blocks map to concrete code modules. The system uses a clean separation of concerns, persistent data models, and asynchronous execution (api/main.py) to orchestrate the hybrid reasoning process.
 
 ### 3. The Nash Algorithm
 
