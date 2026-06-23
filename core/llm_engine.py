@@ -110,16 +110,16 @@ class MockLLMEngine(BaseLLMEngine):
     def _generate_strategy(
         self, role: str, budget: float, remaining: float, market_price: float, win_rate: float, target_cpa: float
     ) -> str:
-        # Base bid on target CPA (willingness to pay), not market price
+        # Bid = target_cpa × role_pct  (role modulates how aggressively CPA is spent)
         if role == "aggressive":
-            bid_pct = self.rng.uniform(0.50, 0.70)
-            justification = "Aggressive market capture: bidding near valuation to win impressions"
+            bid_pct = self.rng.uniform(0.70, 0.95)
+            justification = "Aggressive: bidding near valuation to maximize win rate"
         elif role == "conservative":
-            bid_pct = self.rng.uniform(0.20, 0.40)
-            justification = "Conservative ROI focus: minimizing CPA while maintaining presence"
+            bid_pct = self.rng.uniform(0.05, 0.25)
+            justification = "Conservative: bidding well below valuation to protect margin"
         else:
-            bid_pct = self.rng.uniform(0.30, 0.55)
-            justification = "Balanced approach: competitive bidding with budget awareness"
+            bid_pct = self.rng.uniform(0.35, 0.60)
+            justification = "Balanced: competitive bid with moderate budget risk"
 
         bid = round(max(target_cpa, 1.0) * bid_pct, 2) if target_cpa > 0 else round(market_price, 2)
 
