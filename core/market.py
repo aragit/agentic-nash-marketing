@@ -31,9 +31,9 @@ class MarketSimulator:
         """Advance one auction round."""
         self.round += 1
 
-        # Stochastic impression supply (Poisson-like)
-        available = int(self.rng.gauss(1000, 200))
-        available = max(100, available)
+        # Stochastic impression supply — create scarcity vs active_agents for competitive auctions
+        available = int(self.rng.gauss(max(2, active_agents * 0.7), 1))
+        available = max(1, available)
 
         # Seasonality: sine wave + random noise
         seasonality = 1.0 + 0.3 * self.rng.gauss(0, 1)

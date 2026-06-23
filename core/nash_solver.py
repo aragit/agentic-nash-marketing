@@ -18,7 +18,7 @@ class NashEquilibriumSolver:
     """
 
     def __init__(self, bid_levels: List[float] = None):
-        self.bid_levels = bid_levels or [1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0, 10.0]
+        self.bid_levels = np.array(bid_levels or [1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0, 10.0])
 
     def compute_equilibrium(
         self,
@@ -72,7 +72,12 @@ class NashEquilibriumSolver:
                 # Softmax best response (temperature for convergence stability)
                 temperature = max(0.1, 1.0 - iteration / max_iterations)
                 exp_utils = np.exp(utilities / temperature)
-                new_strategies[agent_name] = exp_utils / np.sum(exp_utils)
+                softmax_strat = exp_utils / np.sum(exp_utils)
+                # Early regularization prevents cycling; removed halfway for clean convergence
+                if iteration < max_iterations // 2:
+                    epsilon = 0.15 * (1.0 - iteration / (max_iterations // 2))
+                    softmax_strat = (1.0 - epsilon) * softmax_strat + epsilon / n_levels
+                new_strategies[agent_name] = softmax_strat
 
             # Check convergence
             max_diff = max(
@@ -96,7 +101,7 @@ class NashEquilibriumSolver:
                 name: {
                     "distribution": strategies[name].tolist(),
                     "expected_bid": float(np.dot(strategies[name], self.bid_levels)),
-                    "bid_levels": self.bid_levels,
+                    "bid_levels": self.bid_levels.tolist(),
                 }
                 for name in strategies.keys()
             },
@@ -109,22 +114,18 @@ class NashEquilibriumSolver:
         self,
         agent_name: str,
         bid: float,
-        agent_budgets: Dict[str, float],
+        agent_budgets: Dict[str, float],  # kept for API compatibility
         agent_valuations: Dict[str, float],
         opponent_strategies: Dict[str, np.ndarray],
         impression_supply: int,
     ) -> float:
         """Compute expected utility for a single bid level."""
         valuation = agent_valuations.get(agent_name, 50.0)
-        budget = agent_budgets.get(agent_name, 1000.0)
 
         # Probability of winning with this bid against opponent mixed strategies
         win_prob = self._win_probability(bid, opponent_strategies, impression_supply)
 
-        # Expected profit = win_prob * (valuation - bid) - but constrained by budget
-        if bid > budget * 0.2:  # Can't spend more than 20% per bid
-            return -1000.0  # Heavily penalize over-budget bids
-
+        # Expected profit = win_prob * (valuation - bid)
         expected_profit = win_prob * (valuation - bid)
         return expected_profit
 
@@ -134,26 +135,19 @@ class NashEquilibriumSolver:
         opponent_strategies: Dict[str, np.ndarray],
         impression_supply: int,
     ) -> float:
-        """Probability that this bid wins given opponent mixed strategies."""
+        """Stochastic win probability via Monte Carlo — noise aids equilibrium exploration."""
         if not opponent_strategies:
             return 1.0
 
-        # Monte Carlo estimate: sample opponent bids
-        n_samples = 1000
-        wins = 0
+        n_samples = 5000
+        n_opponents = len(opponent_strategies)
+        samples = np.zeros((n_samples, n_opponents))
+        for j, strategy in enumerate(opponent_strategies.values()):
+            samples[:, j] = np.random.choice(self.bid_levels, size=n_samples, p=strategy)
 
-        for _ in range(n_samples):
-            opponent_bids = []
-            for name, strategy in opponent_strategies.items():
-                sampled_bid = np.random.choice(self.bid_levels, p=strategy)
-                opponent_bids.append(sampled_bid)
-
-            # Count how many opponents bid higher
-            higher_bids = sum(1 for b in opponent_bids if b > bid)
-            if higher_bids < impression_supply:
-                wins += 1
-
-        return wins / n_samples
+        higher_bids = np.sum(samples > bid, axis=1)
+        wins = np.sum(higher_bids < impression_supply)
+        return float(wins) / n_samples
 
     def _equilibrium_clearing_price(
         self,

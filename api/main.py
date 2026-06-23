@@ -2,6 +2,8 @@
 
 import logging
 import json
+import asyncio
+from concurrent.futures import ThreadPoolExecutor
 from typing import List, Dict, Any
 from fastapi import FastAPI, HTTPException, Depends
 from fastapi.staticfiles import StaticFiles
@@ -9,7 +11,7 @@ from fastapi.responses import HTMLResponse
 from sqlalchemy.orm import Session
 
 from configs.settings import settings
-from database.models import get_db, Simulation, AgentRecord, AuctionRound
+from database.models import get_db, SessionLocal, Simulation, AgentRecord, AuctionRound
 from database.connection import init_database
 from core.llm_engine import LLMEngineFactory
 from core.agents import BrandAgent
@@ -30,6 +32,10 @@ app = FastAPI(
     description="Multi-Agent Competitive Ad Auction with Nash Equilibrium",
     version="1.0.0",
 )
+
+# Background task executor
+executor = ThreadPoolExecutor(max_workers=2)
+running_simulations = {}
 
 # Mount static files for dashboard
 app.mount("/static", StaticFiles(directory="static"), name="static")
@@ -71,7 +77,7 @@ async def run_simulation(
     request: RunSimulationRequest,
     db: Session = Depends(get_db),
 ):
-    """Run a new auction simulation."""
+    """Run a new auction simulation asynchronously."""
     logger.info(f"Starting simulation: {request.name} with {len(request.agents)} agents")
 
     # Create simulation record
@@ -83,113 +89,144 @@ async def run_simulation(
     db.add(sim)
     db.commit()
     db.refresh(sim)
+    sim_id = sim.id  # Capture ID before closing request session
 
-    try:
-        # Initialize LLM and market
-        llm = LLMEngineFactory.create(use_mock=(settings.llm_backend == "mock"))
-        market = MarketSimulator(seed=request.seed)
-        engine = AuctionEngine(market)
+    def _run_simulation():
+        """Background simulation runner with its own DB session."""
+        # CRITICAL: Create new session for this thread — don't reuse FastAPI's
+        thread_db = SessionLocal()
+        try:
+            llm = LLMEngineFactory.create(use_mock=(settings.llm_backend == "mock"))
+            market = MarketSimulator(seed=request.seed)
+            engine = AuctionEngine(market)
 
-        # Create agents
-        agents = []
-        for cfg in request.agents:
-            agent = BrandAgent(
-                name=cfg.name,
-                role=cfg.role,
-                budget=cfg.budget,
-                target_cpa=cfg.target_cpa,
-                llm=llm,
-            )
-            agents.append(agent)
+            # Create agents
+            agents = []
+            for cfg in request.agents:
+                agent = BrandAgent(
+                    name=cfg.name,
+                    role=cfg.role,
+                    budget=cfg.budget,
+                    target_cpa=cfg.target_cpa,
+                    llm=llm,
+                )
+                agents.append(agent)
 
-            # Record agent in DB
-            agent_record = AgentRecord(
-                simulation_id=sim.id,
-                name=cfg.name,
-                role=cfg.role,
-                total_budget=cfg.budget,
-                remaining_budget=cfg.budget,
-                target_cpa=cfg.target_cpa,
-            )
-            db.add(agent_record)
+                # Record agent in DB
+                agent_record = AgentRecord(
+                    simulation_id=sim_id,
+                    name=cfg.name,
+                    role=cfg.role,
+                    total_budget=cfg.budget,
+                    remaining_budget=cfg.budget,
+                    target_cpa=cfg.target_cpa,
+                )
+                thread_db.add(agent_record)
 
-        db.commit()
+            thread_db.commit()
 
-        # Run rounds
-        for round_num in range(request.rounds):
-            result = engine.run_round(agents)
+            # Run rounds
+            for round_num in range(request.rounds):
+                result = engine.run_round(agents)
 
-            # Record round
-            round_record = AuctionRound(
-                simulation_id=sim.id,
-                round_number=result.round_number,
-                clearing_price=result.clearing_price,
-                total_revenue=result.total_revenue,
-                available_impressions=result.market_state.available_impressions,
-                audience_quality=result.market_state.audience_quality,
-                seasonality=result.market_state.seasonality_factor,
-                winner_count=len(result.winners),
-                loser_count=len(result.losers),
-                winners=result.winners,
-                losers=result.losers,
-            )
-            db.add(round_record)
+                # Record round
+                round_record = AuctionRound(
+                    simulation_id=sim_id,
+                    round_number=result.round_number,
+                    clearing_price=result.clearing_price,
+                    total_revenue=result.total_revenue,
+                    available_impressions=result.market_state.available_impressions,
+                    audience_quality=result.market_state.audience_quality,
+                    seasonality=result.market_state.seasonality_factor,
+                    winner_count=len(result.winners),
+                    loser_count=len(result.losers),
+                    winners=result.winners,
+                    losers=result.losers,
+                )
+                thread_db.add(round_record)
 
-            # Update agent records
-            for agent in agents:
-                record = db.query(AgentRecord).filter_by(
-                    simulation_id=sim.id, name=agent.name
-                ).first()
-                if record:
-                    record.remaining_budget = agent.state.remaining_budget
-                    record.impressions_won = agent.state.impressions_won
-                    record.total_spent = agent.state.total_spent
-                    record.total_conversions = agent.state.total_conversions
-                    record.final_win_rate = agent.state.win_rate
-                    record.final_strategy = agent.state.role
+                # Update agent records
+                for agent in agents:
+                    record = thread_db.query(AgentRecord).filter_by(
+                        simulation_id=sim_id, name=agent.name
+                    ).first()
+                    if record:
+                        record.remaining_budget = agent.state.remaining_budget
+                        record.impressions_won = agent.state.impressions_won
+                        record.total_spent = agent.state.total_spent
+                        record.total_conversions = agent.state.total_conversions
+                        record.final_win_rate = agent.state.win_rate
+                        record.final_strategy = agent.state.role
 
-            db.commit()
+                thread_db.commit()
 
-            # Stop if all budgets depleted
-            active = [a for a in agents if a.state.remaining_budget > 0]
-            if len(active) < 2:
-                logger.info(f"Simulation ended early at round {round_num + 1}: only {len(active)} agents active")
-                break
+                # Stop if all budgets depleted
+                active = [a for a in agents if a.state.remaining_budget > 0]
+                if len(active) < 2:
+                    logger.info(f"Simulation ended early at round {round_num + 1}: only {len(active)} agents active")
+                    break
 
-        # Compute Nash equilibrium post-hoc
-        budgets = {a.name: a.state.total_budget for a in agents}
-        valuations = {a.name: a.state.target_cpa for a in agents}
-        nash = NashEquilibriumSolver().compute_equilibrium(
-            budgets, valuations, impression_supply=100
-        )
+            # Finalize simulation immediately — set completed BEFORE slow Nash solver
+            sim_record = thread_db.query(Simulation).filter(Simulation.id == sim_id).first()
+            if sim_record:
+                sim_record.status = "completed"
+                sim_record.total_rounds = len(engine.history)
+                sim_record.total_revenue = sum(r.total_revenue for r in engine.history)
+                sim_record.final_clearing_price = engine.history[-1].clearing_price if engine.history else 0.0
+                thread_db.commit()
 
-        # Finalize simulation
-        sim.status = "completed"
-        sim.total_rounds = len(engine.history)
-        sim.total_revenue = sum(r.total_revenue for r in engine.history)
-        sim.final_clearing_price = engine.history[-1].clearing_price if engine.history else 0.0
-        sim.nash_equilibrium = nash
-        db.commit()
-        db.refresh(sim)
+            llm.shutdown()
+            running_simulations[sim_id] = {"status": "completed", "sim_id": sim_id}
+            logger.info(f"Simulation {sim_id} completed successfully")
 
-        llm.shutdown()
+            # Compute Nash equilibrium post-hoc (slow — don't block UI polling)
+            try:
+                budgets = {a.name: a.state.total_budget for a in agents}
+                valuations = {a.name: a.state.target_cpa for a in agents}
+                # Scale bid levels to cover the valuation range
+                max_val = max(valuations.values()) if valuations else 50.0
+                step = max(1.0, max_val / 10)
+                bid_levels = [round(i * step, 1) for i in range(1, 11)]
+                nash_supply = max(1, len(agents) // 3)  # ~33% win rate → real competition
+                solver = NashEquilibriumSolver(bid_levels=bid_levels)
+                nash = solver.compute_equilibrium(
+                    budgets, valuations, impression_supply=nash_supply
+                )
+                if sim_record:
+                    sim_record.nash_equilibrium = nash
+                    thread_db.commit()
+            except Exception as nash_err:
+                logger.warning(f"Nash computation failed for sim {sim_id}: {nash_err}")
 
-        return SimulationSummary(
-            id=sim.id,
-            name=sim.name,
-            total_rounds=sim.total_rounds,
-            total_agents=sim.total_agents,
-            final_clearing_price=sim.final_clearing_price,
-            total_revenue=sim.total_revenue,
-            status=sim.status,
-            created_at=sim.created_at,
-        )
+        except Exception as e:
+            # Mark as failed
+            try:
+                sim_record = thread_db.query(Simulation).filter(Simulation.id == sim_id).first()
+                if sim_record:
+                    sim_record.status = "failed"
+                    thread_db.commit()
+            except:
+                pass
+            logger.error(f"Simulation {sim_id} failed: {e}")
+            running_simulations[sim_id] = {"status": "failed", "error": str(e)}
+        finally:
+            thread_db.close()
 
-    except Exception as e:
-        sim.status = "failed"
-        db.commit()
-        logger.error(f"Simulation failed: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+    # Start background task
+    running_simulations[sim_id] = {"status": "running"}
+    asyncio.get_event_loop().run_in_executor(executor, _run_simulation)
+
+    # Return immediately with running status
+    return SimulationSummary(
+        id=sim_id,
+        name=request.name,
+        total_rounds=0,
+        total_agents=len(request.agents),
+        final_clearing_price=0.0,
+        total_revenue=0.0,
+        status="running",
+        created_at=sim.created_at,
+    )
 
 
 @app.get("/simulation/{sim_id}", response_model=SimulationDetail)

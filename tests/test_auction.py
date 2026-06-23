@@ -30,11 +30,14 @@ class TestAuctionEngine:
         assert result.losers == []
         assert result.total_revenue == 0.0
 
-    def test_all_agents_win_when_supply_exceeds_demand(self, engine, three_agents):
-        """When impressions > agents, everyone wins."""
-        result = engine.run_round(three_agents)
-        assert len(result.winners) == 3
-        assert len(result.losers) == 0
+    def test_some_agents_lose_when_supply_scarce(self, engine, three_agents):
+        """With scarce impressions, not all agents win."""
+        results = [engine.run_round(three_agents) for _ in range(10)]
+        total_winners = sum(len(r.winners) for r in results)
+        total_losers = sum(len(r.losers) for r in results)
+        # Over 10 rounds, some rounds should have losers
+        assert any(len(r.losers) > 0 for r in results), "No losers in any round — supply too high"
+        assert total_winners + total_losers == 30  # 3 agents * 10 rounds
 
     def test_clearing_price_is_non_negative(self, engine, three_agents):
         """Clearing price should never be negative."""

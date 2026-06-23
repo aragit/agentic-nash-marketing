@@ -166,12 +166,12 @@
                     <div class="agent-row">
                         <input type="text" placeholder="Name" value="Nike" />
                         <select>
-                            <option value="aggressive">Aggressive</option>
-                            <option value="balanced" selected>Balanced</option>
+                            <option value="aggressive" selected>Aggressive</option>
+                            <option value="balanced">Balanced</option>
                             <option value="conservative">Conservative</option>
                         </select>
-                        <input type="number" placeholder="Budget" value="5000" />
-                        <input type="number" placeholder="CPA" value="30" />
+                        <input type="number" placeholder="Budget" value="200" />
+                        <input type="number" placeholder="CPA" value="15" />
                     </div>
                     <div class="agent-row">
                         <input type="text" placeholder="Name" value="Adidas" />
@@ -180,7 +180,7 @@
                             <option value="balanced" selected>Balanced</option>
                             <option value="conservative">Conservative</option>
                         </select>
-                        <input type="number" placeholder="Budget" value="5000" />
+                        <input type="number" placeholder="Budget" value="100" />
                         <input type="number" placeholder="CPA" value="35" />
                     </div>
                     <div class="agent-row">
@@ -190,8 +190,8 @@
                             <option value="balanced">Balanced</option>
                             <option value="conservative" selected>Conservative</option>
                         </select>
-                        <input type="number" placeholder="Budget" value="5000" />
-                        <input type="number" placeholder="CPA" value="40" />
+                        <input type="number" placeholder="Budget" value="50" />
+                        <input type="number" placeholder="CPA" value="80" />
                     </div>
                 </div>
             </div>
@@ -288,7 +288,7 @@
                 };
             });
 
-            log(`Starting simulation: ${name} with ${agents.length} agents for ${rounds} rounds...`);
+            log(`Starting simulation: ${name} with ${agents.length} agents...`);
 
             try {
                 const res = await fetch(`${API_BASE}/simulation/run`, {
@@ -297,9 +297,11 @@
                     body: JSON.stringify({ name, agents, rounds, seed: 42 })
                 });
                 const data = await res.json();
-                log(`Simulation complete! ID: ${data.id}, Revenue: $${data.total_revenue.toFixed(2)}`, 'success');
-                await loadSimulationDetail(data.id);
-                await loadSimulations();
+                log(`Simulation started! ID: ${data.id}. Polling for completion...`);
+
+                // Poll for completion
+                await pollSimulation(data.id);
+
             } catch (e) {
                 log('Simulation failed: ' + e.message, 'error');
             } finally {
@@ -308,16 +310,50 @@
             }
         }
 
+        async function pollSimulation(simId, maxAttempts = 30) {
+            for (let i = 0; i < maxAttempts; i++) {
+                await new Promise(r => setTimeout(r, 1000)); // Wait 1 second
+
+                try {
+                    const res = await fetch(`${API_BASE}/simulation/${simId}`);
+                    if (res.status === 404) {
+                        log(`Waiting for simulation ${simId}... (${i + 1}/${maxAttempts})`);
+                        continue;
+                    }
+
+                    const data = await res.json();
+                    if (data.status === 'completed') {
+                        log(`Simulation complete! Revenue: $${data.total_revenue.toFixed(2)}`, 'success');
+                        await loadSimulationDetail(simId);
+                        await loadSimulations();
+                        return;
+                    } else if (data.status === 'failed') {
+                        log('Simulation failed on server.', 'error');
+                        return;
+                    } else if (data.status === 'running') {
+                        log(`Simulation running... (${i + 1}/${maxAttempts})`);
+                    }
+                } catch (e) {
+                    // Network error, retry
+                }
+            }
+            log('Simulation polling timed out. Check server logs.', 'error');
+        }
+
+        async function fetchSimulation(id) {
+            const res = await fetch(`${API_BASE}/simulation/${id}`);
+            return res.json();
+        }
+
         async function loadSimulationDetail(id) {
             try {
-                const res = await fetch(`${API_BASE}/simulation/${id}`);
-                const data = await res.json();
-
+                const data = await fetchSimulation(id);
                 document.getElementById('charts-section').style.display = 'grid';
+                await new Promise(r => setTimeout(r, 50));
 
-                // Budget chart
+                // Budget chart — amount spent per agent (absolute $)
                 const agentNames = data.agents.map(a => a.name);
-                const budgets = data.agents.map(a => a.total_budget - a.remaining_budget);
+                const spent = data.agents.map(a => a.total_budget - a.remaining_budget);
                 const remaining = data.agents.map(a => a.remaining_budget);
 
                 if (budgetChart) budgetChart.destroy();
@@ -326,31 +362,54 @@
                     data: {
                         labels: agentNames,
                         datasets: [
-                            { label: 'Spent', data: budgets, backgroundColor: '#f87171' },
-                            { label: 'Remaining', data: remaining, backgroundColor: '#4ade80' }
+                            {
+                                label: 'Spent ($)',
+                                data: spent,
+                                backgroundColor: '#f87171',
+                                order: 1
+                            },
+                            {
+                                label: 'Remaining ($)',
+                                data: remaining,
+                                backgroundColor: '#4ade80',
+                                order: 2
+                            }
                         ]
                     },
                     options: {
                         responsive: true,
-                        plugins: { legend: { labels: { color: '#e2e8f0' } } },
+                        maintainAspectRatio: false,
                         scales: {
-                            x: { ticks: { color: '#94a3b8' } },
-                            y: { ticks: { color: '#94a3b8' } }
+                            x: { stacked: false, ticks: { color: '#94a3b8' } },
+                            y: { stacked: false, beginAtZero: true, ticks: { color: '#94a3b8' } }
+                        },
+                        plugins: {
+                            legend: { labels: { color: '#e2e8f0' } },
+                            tooltip: {
+                                callbacks: {
+                                    label: ctx => `${ctx.dataset.label}: $${ctx.raw.toFixed(2)}`
+                                }
+                            }
                         }
                     }
                 });
 
                 // Win rate chart
-                const winRates = data.agents.map(a => a.win_rate * 100);
+                const winRates = data.agents.map(a => (a.win_rate || 0) * 100);
+                const totalWin = winRates.reduce((s, v) => s + v, 0) || 1;
+                const colors = data.agents.map((_, i) =>
+                    ['#38bdf8', '#a78bfa', '#fbbf24', '#f87171', '#4ade80'][i % 5]
+                );
                 if (winrateChart) winrateChart.destroy();
                 winrateChart = new Chart(document.getElementById('winrate-chart'), {
                     type: 'doughnut',
                     data: {
-                        labels: agentNames,
-                        datasets: [{ data: winRates, backgroundColor: ['#38bdf8', '#a78bfa', '#fbbf24'] }]
+                        labels: agentNames.map((n, i) => `${n} (${winRates[i].toFixed(0)}%)`),
+                        datasets: [{ data: winRates, backgroundColor: colors }]
                     },
                     options: {
                         responsive: true,
+                        maintainAspectRatio: false,
                         plugins: { legend: { labels: { color: '#e2e8f0' } } }
                     }
                 });
@@ -374,6 +433,7 @@
                     },
                     options: {
                         responsive: true,
+                        maintainAspectRatio: false,
                         plugins: { legend: { labels: { color: '#e2e8f0' } } },
                         scales: {
                             x: { ticks: { color: '#94a3b8' } },
@@ -382,9 +442,17 @@
                     }
                 });
 
-                // Nash equilibrium
-                if (data.nash_equilibrium && data.nash_equilibrium.strategies) {
-                    const nashData = Object.entries(data.nash_equilibrium.strategies).map(([name, s]) => ({
+                // Nash equilibrium — retry if not yet computed (runs async after status=completed)
+                let nashData = data;
+                if (!nashData.nash_equilibrium || !nashData.nash_equilibrium.strategies) {
+                    for (let i = 0; i < 15; i++) {
+                        await new Promise(r => setTimeout(r, 1000));
+                        nashData = await fetchSimulation(id);
+                        if (nashData.nash_equilibrium && nashData.nash_equilibrium.strategies) break;
+                    }
+                }
+                if (nashData.nash_equilibrium && nashData.nash_equilibrium.strategies) {
+                    const nashEntries = Object.entries(nashData.nash_equilibrium.strategies).map(([name, s]) => ({
                         name,
                         expected: s.expected_bid
                     }));
@@ -392,15 +460,16 @@
                     nashChart = new Chart(document.getElementById('nash-chart'), {
                         type: 'bar',
                         data: {
-                            labels: nashData.map(d => d.name),
+                            labels: nashEntries.map(d => d.name),
                             datasets: [{
                                 label: 'Expected Bid (Nash)',
-                                data: nashData.map(d => d.expected),
+                                data: nashEntries.map(d => d.expected),
                                 backgroundColor: '#a78bfa'
                             }]
                         },
                         options: {
                             responsive: true,
+                            maintainAspectRatio: false,
                             plugins: { legend: { labels: { color: '#e2e8f0' } } },
                             scales: {
                                 x: { ticks: { color: '#94a3b8' } },
