@@ -67,8 +67,8 @@ class MockLLMEngine(BaseLLMEngine):
 
         # Extract context values from prompt
         budget = self._extract_float(system_prompt, "budget: $")
-        remaining = self._extract_float(system_prompt, "remaining: $")
-        market_price = self._extract_float(system_prompt, "market price: $")
+        remaining = self._extract_float(system_prompt, "remaining budget: $")
+        market_price = self._extract_float(system_prompt, "market clearing price: $")
         win_rate = self._extract_float(system_prompt, "win rate:")
         target_cpa = self._extract_float(system_prompt, "target CPA (cost per acquisition): $")
 
@@ -85,13 +85,15 @@ class MockLLMEngine(BaseLLMEngine):
         )
 
     def _extract_role(self, text: str) -> str:
-        text_lower = text.lower()
-        if "aggressive" in text_lower:
-            return "aggressive"
-        if "conservative" in text_lower:
-            return "conservative"
-        if "balanced" in text_lower:
-            return "balanced"
+        idx = text.lower().find("your role: ")
+        if idx >= 0:
+            role_text = text[idx:idx+60].lower()
+            if "aggressive" in role_text:
+                return "aggressive"
+            if "conservative" in role_text:
+                return "conservative"
+            if "balanced" in role_text:
+                return "balanced"
         return "balanced"
 
     def _extract_float(self, text: str, key: str) -> float:

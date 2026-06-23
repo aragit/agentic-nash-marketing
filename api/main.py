@@ -183,14 +183,23 @@ async def run_simulation(
             try:
                 budgets = {a.name: a.state.total_budget for a in agents}
                 valuations = {a.name: a.state.target_cpa for a in agents}
-                # Scale bid levels to cover the valuation range
-                max_val = max(valuations.values()) if valuations else 50.0
-                step = max(1.0, max_val / 10)
-                bid_levels = [round(i * step, 1) for i in range(1, 11)]
-                nash_supply = max(1, len(agents) // 3)  # ~33% win rate → real competition
-                solver = NashEquilibriumSolver(bid_levels=bid_levels)
+                # Per-agent bid levels based on CPA × role range
+                # Wider ranges for Nash post-hoc — lets low-CPA agents compete with high-CPA agents
+                # (LLM simulation uses tighter ranges for realistic bids)
+                nash_role_ranges = {"aggressive": (0.50, 1.20), "balanced": (0.40, 0.90), "conservative": (0.10, 0.60)}
+                agent_bid_levels = {}
+                for a in agents:
+                    lo, hi = nash_role_ranges.get(a.state.role, (0.35, 0.60))
+                    cpa = a.state.target_cpa
+                    levels = sorted(set([
+                        round(cpa * pct, 2)
+                        for pct in [lo + (hi - lo) * i / 9 for i in range(10)]
+                    ]))
+                    agent_bid_levels[a.name] = levels if levels else [max(1.0, cpa * lo)]
+                nash_supply = max(1, int(len(agents) * 0.7))  # match simulation: gauss(agents*0.7, 1)
+                solver = NashEquilibriumSolver()
                 nash = solver.compute_equilibrium(
-                    budgets, valuations, impression_supply=nash_supply
+                    budgets, valuations, impression_supply=nash_supply, agent_bid_levels=agent_bid_levels
                 )
                 if sim_record:
                     sim_record.nash_equilibrium = nash

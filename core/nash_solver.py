@@ -23,27 +23,33 @@ class NashEquilibriumSolver:
     def compute_equilibrium(
         self,
         agent_budgets: Dict[str, float],
-        agent_valuations: Dict[str, float],  # Value per conversion
+        agent_valuations: Dict[str, float],
         impression_supply: int,
+        agent_bid_levels: Dict[str, List[float]] = None,
     ) -> Dict[str, any]:
         """
         Compute approximate mixed-strategy Nash equilibrium.
-        
+
         Uses iterative best-response with softmax smoothing.
+        If agent_bid_levels is provided, each agent gets their own bid levels
+        (enabling CPA × role differentiated equilibria).
         """
+        if agent_bid_levels is None:
+            agent_bid_levels = {name: self.bid_levels.tolist() for name in agent_budgets}
+
+        # Convert to numpy arrays
+        agent_levels = {name: np.array(levels) for name, levels in agent_bid_levels.items()}
         n_agents = len(agent_budgets)
-        n_levels = len(self.bid_levels)
 
         if n_agents == 0:
             return {"strategies": {}, "clearing_price": 0.0, "convergence": 0.0}
 
-        # Initialize uniform mixed strategies
+        # Initialize uniform mixed strategies over each agent's own bid levels
         strategies = {
-            name: np.ones(n_levels) / n_levels
+            name: np.ones(len(agent_levels[name])) / len(agent_levels[name])
             for name in agent_budgets.keys()
         }
 
-        # Iterative best response
         max_iterations = 100
         tolerance = 1e-4
 
@@ -52,11 +58,12 @@ class NashEquilibriumSolver:
 
             for agent_name in agent_budgets.keys():
                 opponent_names = [n for n in agent_budgets.keys() if n != agent_name]
+                my_levels = agent_levels[agent_name]
+                n_levels = len(my_levels)
 
-                # Compute expected utility for each bid level
                 utilities = np.zeros(n_levels)
 
-                for i, bid in enumerate(self.bid_levels):
+                for i, bid in enumerate(my_levels):
                     expected_utility = self._expected_utility(
                         agent_name=agent_name,
                         bid=bid,
@@ -66,20 +73,18 @@ class NashEquilibriumSolver:
                             n: strategies[n] for n in opponent_names
                         },
                         impression_supply=impression_supply,
+                        opponent_levels={n: agent_levels[n] for n in opponent_names},
                     )
                     utilities[i] = expected_utility
 
-                # Softmax best response (temperature for convergence stability)
                 temperature = max(0.1, 1.0 - iteration / max_iterations)
                 exp_utils = np.exp(utilities / temperature)
                 softmax_strat = exp_utils / np.sum(exp_utils)
-                # Early regularization prevents cycling; removed halfway for clean convergence
                 if iteration < max_iterations // 2:
                     epsilon = 0.15 * (1.0 - iteration / (max_iterations // 2))
                     softmax_strat = (1.0 - epsilon) * softmax_strat + epsilon / n_levels
                 new_strategies[agent_name] = softmax_strat
 
-            # Check convergence
             max_diff = max(
                 np.max(np.abs(new_strategies[name] - strategies[name]))
                 for name in strategies.keys()
@@ -91,17 +96,16 @@ class NashEquilibriumSolver:
                 logger.info(f"Nash equilibrium converged in {iteration + 1} iterations")
                 break
 
-        # Compute equilibrium clearing price
         eq_clearing_price = self._equilibrium_clearing_price(
-            strategies, agent_budgets, impression_supply
+            strategies, agent_budgets, impression_supply, agent_levels
         )
 
         return {
             "strategies": {
                 name: {
                     "distribution": strategies[name].tolist(),
-                    "expected_bid": float(np.dot(strategies[name], self.bid_levels)),
-                    "bid_levels": self.bid_levels.tolist(),
+                    "expected_bid": float(np.dot(strategies[name], agent_levels[name])),
+                    "bid_levels": agent_levels[name].tolist(),
                 }
                 for name in strategies.keys()
             },
@@ -114,36 +118,37 @@ class NashEquilibriumSolver:
         self,
         agent_name: str,
         bid: float,
-        agent_budgets: Dict[str, float],  # kept for API compatibility
+        agent_budgets: Dict[str, float],
         agent_valuations: Dict[str, float],
         opponent_strategies: Dict[str, np.ndarray],
         impression_supply: int,
+        opponent_levels: Dict[str, np.ndarray] = None,
     ) -> float:
         """Compute expected utility for a single bid level."""
         valuation = agent_valuations.get(agent_name, 50.0)
-
-        # Probability of winning with this bid against opponent mixed strategies
-        win_prob = self._win_probability(bid, opponent_strategies, impression_supply)
-
-        # Expected profit = win_prob * (valuation - bid)
-        expected_profit = win_prob * (valuation - bid)
-        return expected_profit
+        win_prob = self._win_probability(bid, opponent_strategies, impression_supply, opponent_levels)
+        return win_prob * (valuation - bid)
 
     def _win_probability(
         self,
         bid: float,
         opponent_strategies: Dict[str, np.ndarray],
         impression_supply: int,
+        opponent_levels: Dict[str, np.ndarray] = None,
     ) -> float:
-        """Stochastic win probability via Monte Carlo — noise aids equilibrium exploration."""
+        """Stochastic win probability via Monte Carlo."""
         if not opponent_strategies:
             return 1.0
+
+        if opponent_levels is None:
+            opponent_levels = {name: self.bid_levels for name in opponent_strategies}
 
         n_samples = 5000
         n_opponents = len(opponent_strategies)
         samples = np.zeros((n_samples, n_opponents))
-        for j, strategy in enumerate(opponent_strategies.values()):
-            samples[:, j] = np.random.choice(self.bid_levels, size=n_samples, p=strategy)
+        for j, (name, strategy) in enumerate(opponent_strategies.items()):
+            levels = opponent_levels[name]
+            samples[:, j] = np.random.choice(levels, size=n_samples, p=strategy)
 
         higher_bids = np.sum(samples > bid, axis=1)
         wins = np.sum(higher_bids < impression_supply)
@@ -154,12 +159,15 @@ class NashEquilibriumSolver:
         strategies: Dict[str, np.ndarray],
         agent_budgets: Dict[str, float],
         impression_supply: int,
+        agent_levels: Dict[str, np.ndarray] = None,
     ) -> float:
         """Estimate equilibrium clearing price from mixed strategies."""
-        # Expected bids from all agents
+        if agent_levels is None:
+            agent_levels = {name: self.bid_levels for name in strategies}
+
         expected_bids = []
         for name, strategy in strategies.items():
-            expected_bid = np.dot(strategy, self.bid_levels)
+            expected_bid = np.dot(strategy, agent_levels[name])
             expected_bids.append(expected_bid)
 
         sorted_bids = sorted(expected_bids, reverse=True)
