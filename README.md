@@ -65,7 +65,7 @@ This project replaces guesswork with mathematical guarantees. It simulates how r
 
 ### **1. Agentic AI Criteria**
 
-An agentic AI system is defined by autonomous entities that perceive, decide, and act in an environment with persistent goals. Our system satisfies all six criteria:
+An agentic AI system ([Algorithmic Arbitration Architecture Pattern](https://aragit.github.io/architecture.html#deterministic))  is defined by autonomous entities that perceive, decide, and act in an environment with persistent goals. Our system satisfies all six criteria:
 
 | Criterion | Implementation | Evidence |
 |:---|:---|:---|
