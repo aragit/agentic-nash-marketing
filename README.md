@@ -110,9 +110,6 @@ The central bottom cluster shows the core/agents.py, core/guardrails.py, and cor
 - *Validation (Hybrid → Symbolic):* The symbolic pod validates the proposal. The BudgetGuardrail (guardrails.py) enforces a strict linear constraint: the raw bid is capped at a hard threshold (remaining × 0.2 per bid) to prevent catastrophic depletion.
 - *Enforcement (Orchestration):* The finalized, validated bids move into the AuctionEngine (auction.py), which resolves the mechanics (Symbolic/Logic, VCG second-price format).
 
-<p align="center">
-  <img src="assets/Agentic_Nash.jpeg" alt="Agentic Nash Architecture" width="700px">
-</p>
 
 This diagram shows how the conceptual Neuro-Symbolic blocks map to concrete code modules. The system uses a clean separation of concerns, persistent data models, and asynchronous execution (api/main.py) to orchestrate the hybrid reasoning process.
 
