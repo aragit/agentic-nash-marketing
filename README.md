@@ -1,168 +1,181 @@
-<h1 align="center">🏛️ Agentic Nash Marketing</h1>
-<p align="center"><b>Multi-Agent Competitive Ad Auction with Nash Equilibrium</b></p>
+<h1 align="center">Agentic Nash Marketing</h1>
+<p align="center"><b>Neuro-Symbolic Multi-Agent Competitive Ad Auction with Nash Equilibrium</b></p>
 
-<p align="center"><sub>FastAPI · SQLAlchemy · SciPy · Docker · pytest · Chart.js</sub></p>
+<p align="center"><sub>FastAPI · SQLAlchemy · NumPy · SciPy · Ollama · vLLM · OpenTelemetry · Docker</sub></p>
 
 <p align="center">
-  <img src="https://img.shields.io/badge/Status-🚀%20Production%20Ready-brightgreen" alt="Production Ready">
+  <img src="https://img.shields.io/badge/Status-Production%20Ready-brightgreen" alt="Production Ready">
   <img src="https://img.shields.io/badge/Python-3.12+-blue?logo=python" alt="Python">
   <img src="https://img.shields.io/badge/FastAPI-0.110+-teal?logo=fastapi" alt="FastAPI">
-  <img src="https://img.shields.io/badge/SQLAlchemy-2.0+-orange?logo=sqlalchemy" alt="SQLAlchemy">
-  <img src="https://img.shields.io/badge/SciPy-1.10+-blueviolet?logo=scipy" alt="SciPy">
-  <img src="https://img.shields.io/badge/Docker-Ready-blue?logo=docker" alt="Docker">
-  <img src="https://img.shields.io/badge/Tests-49%20passing-brightgreen" alt="Tests">
-  <img src="https://img.shields.io/badge/LLM-Mock%20%7C%20Transformers-yellow" alt="LLM">
+  <img src="https://img.shields.io/badge/Tests-92%20passing-brightgreen" alt="Tests">
+  <img src="https://img.shields.io/badge/LLM-Mock%20%7C%20Ollama%20%7C%20vLLM%20%7C%20Transformers-yellow" alt="LLM Backends">
+  <img src="https://img.shields.io/badge/Tracing-OpenTelemetry-blueviolet" alt="OTel">
   <img src="https://img.shields.io/badge/License-MIT-green" alt="MIT">
 </p>
 
 ---
 
-Autonomous AI brand agents compete in real-time ad auctions. Each agent uses an LLM to formulate bidding strategy, then a **game-theoretic Nash equilibrium** solver **computes optimal mixed strategies**. Budget guardrails prevent catastrophic depletion.
+Autonomous AI brand agents compete in real-time ad auctions using a **neuro-symbolic architecture**: a neural LLM proposes strategies, a symbolic planner reasons about market trends, a guardrail enforces budget rules, and a vectorized Nash equilibrium solver computes optimal mixed strategies — all with full OpenTelemetry distributed tracing.
 
 ---
 
-## 📋 Table of Contents
+## Table of Contents
 
-- [Why This Matters](#-why-this-matters)
-- [Architecture](#-architecture)
-  - [Agentic AI Criteria](#1-agentic-ai-criteria)
-  - [Neuro-Symbolic Paradigm](#2-neuro-symbolic-paradigm)
-  - [Nash Algorithm](#3-the-nash-algorithm)
-- [Quick Start](#-quick-start)
-  - [Docker](#docker-recommended)
-  - [Local Development](#local-development)
-  - [Dashboard Features](#-dashboard-features)
-- [How It Works](#-how-it-works)
-- [Testing](#-testing)
-- [Tech Stack](#-tech-stack)
-- [API Endpoints](#-api-endpoints)
-- [Future Integration](#-future-integration)
-- [Contributing](#-contributing)
-- [License](#-license)
-
----
-
-## 💡 Why This Matters
-
-| Problem | Impact |
-|:--------|:-------|
-| **Advertisers** waste 30%+ of spend on suboptimal bidding | Nash equilibrium proves optimal strategies exist |
-| **Auction platforms** lose revenue from unstable bidding wars | Equilibrium stabilizes clearing prices |
-| **Campaign managers** rely on rules-of-thumb, not game theory | Data-driven strategy replaces intuition |
-
-This project replaces guesswork with mathematical guarantees. It simulates how rational agents *should* bid, then validates against real auction outcomes.
-
-### Use Cases
-
-- **Ad tech R&D** — Test bidding algorithms before production deployment
-- **Market design** — Analyze how impression supply affects advertiser behavior
-- **Education** — Interactive demonstration of Nash equilibrium in a concrete domain
-- **Procurement integration** — Bridge to [autonomous procurement swarm](https://github.com/aragit/autonomous-procurement-swarm)
+- [Why This Matters](#why-this-matters)
+- [Architecture Overview](#architecture-overview)
+  - [Neuro-Symbolic Pipeline](#neuro-symbolic-pipeline)
+  - [Execution Flow](#execution-flow)
+  - [Async Parallel Execution](#async-parallel-execution)
+  - [Nash Equilibrium Solver](#nash-equilibrium-solver)
+  - [Observability](#observability)
+- [Quick Start](#quick-start)
+- [Project Structure](#project-structure)
+- [LLM Backend Configuration](#llm-backend-configuration)
+- [How It Works](#how-it-works)
+- [Testing](#testing)
+- [Tech Stack](#tech-stack)
+- [API Endpoints](#api-endpoints)
+- [Dashboard](#dashboard)
+- [Contributing](#contributing)
+- [License](#license)
 
 ---
 
-## 🏗️ Architecture
+## Why This Matters
 
-### **1. Agentic AI Criteria**
+| Problem | Impact | Our Solution |
+|:--------|:-------|:-------------|
+| Advertisers waste 30%+ of spend on suboptimal bidding | Proven optimal strategies exist via Nash equilibrium | Post-hoc Nash solver with vectorized Monte Carlo |
+| Auction platforms lose revenue from unstable bidding wars | Equilibrium stabilizes clearing prices | Game-theoretic mixed-strategy convergence |
+| Campaign managers rely on rules-of-thumb, not game theory | Data-driven strategy replaces intuition | LLM-powered agents with adaptive planning |
+| Multi-agent systems are slow when agents think sequentially | 5 agents x 2s = 10s per round | `asyncio.gather` parallel bid computation |
+| Debugging concurrent LLM calls is impossible with logs alone | Can't see who decided what and why | OpenTelemetry distributed tracing |
 
-An agentic AI system ([Algorithmic Arbitration Architecture Pattern](https://aragit.github.io/architecture.html#deterministic))  is defined by autonomous entities that perceive, decide, and act in an environment with persistent goals. Our system satisfies all six criteria:
+---
 
-| Criterion | Implementation | Evidence |
-|:---|:---|:---|
-| **Perception** | Agents observe market state (clearing price, competitor count, win rate, remaining budget) | `BrandAgent.decide_bid()` receives `MarketContext` with full market snapshot |
-| **Decision** | LLM-powered strategic reasoning with structured JSON output | `LLMEngine.chat_completion()` generates bid strategy with role-appropriate bid percentage |
-| **Action** | Agents submit bids to auction engine, pay clearing prices | `AuctionEngine.run_round()` executes VCG allocation and collects payments |
-| **Persistent goals** | Budget preservation, CPA targets, win rate optimization over multiple rounds | `AgentState` tracks cumulative spend, conversions, win rate across entire campaign |
-| **Memory** | Agents recall past round outcomes to adapt strategy | Round history fed into each LLM prompt as prior context |
-| **Adaptation** | Strategy shifts dynamically based on market feedback | Agents adjust bid aggressiveness when over/under-performing CPA targets |
+## Architecture Overview
 
-Unlike simple API wrappers, these agents:
+### Neuro-Symbolic Pipeline
 
-- **Maintain state** across rounds (cumulative spend, conversions, win rate trajectory)
-- **Adapt strategy** based on outcomes (LLM adjusts bid percentage when CPA targets drift)
-- **Operate autonomously** without human intervention for the full simulation lifecycle
-- **Face competitive pressure** from other agents, creating emergent market dynamics
+The system implements a three-layer neuro-symbolic architecture where neural and symbolic components collaborate at each decision point:
 
-### **2. Neuro-Symbolic Paradigm**
+```
+┌─────────────────────────────────────────────────────────────────┐
+│                    AUCTION ROUND (async)                         │
+│                                                                 │
+│  ┌──────────────────────────────────────────────────────────┐   │
+│  │  PHASE 1: Parallel Neural Execution (asyncio.gather)     │   │
+│  │                                                          │   │
+│  │  Agent A ──► StrategyPlanner ──► LLM Synthesizer ──► Bid │   │
+│  │  Agent B ──► StrategyPlanner ──► LLM Synthesizer ──► Bid │   │
+│  │  Agent C ──► StrategyPlanner ──► LLM Synthesizer ──► Bid │   │
+│  └──────────────────────────────────────────────────────────┘   │
+│                           │                                      │
+│                           ▼                                      │
+│  ┌──────────────────────────────────────────────────────────┐   │
+│  │  PHASE 2: Symbolic Enforcement (sequential, CPU-bound)    │   │
+│  │                                                          │   │
+│  │  BudgetGuardrail ──► VCG Auction Resolution              │   │
+│  │  (soft/hard/emergency caps)  (second-price allocation)   │   │
+│  └──────────────────────────────────────────────────────────┘   │
+└─────────────────────────────────────────────────────────────────┘
+```
 
-**1. NEURAL (LLM) POD Cluster (core/llm_engine.py)**
+**Layer 1 — Neural Planning (`core/planner.py`):** Queries the LLM with budget %, recent win rate, and clearing prices to select a tactical strategy (`aggressive`, `balanced`, or `conserve`). The agent adapts its persona based on market conditions — e.g., shifting to `conserve` when budget drops below 30%.
 
-The left cluster is the Neural Strategic Reasoning (LLM) engine, providing dynamic, stochastic strategy generation based on pattern matching and contextual awareness.
+**Layer 2 — Neural Synthesis (`core/agents.py` → `core/llm_engine.py`):** The LLM receives the tactical strategy as its role and generates a structured JSON bid with justification, max daily spend, and target CPA.
 
-- *Responsibility:* The LLMEngineFactory (llm_engine.py) initializes either the rapid, deterministic MockLLMEngine or the slower, CPU-based TransformersEngine.
-- *Prompt context:* When an agent acts (agents.py), it renders the BrandPrompt (prompts.py). This injects natural language context—brand name, current win_rate (0.00 to 1.00), available impressions, competitor count, and full state history—into the LLM for strategy generation.
-- *Stochastic Proposals:* The engine generates non-deterministic strategy proposals (JSON). For example, an aggressive persona chooses a high bid multiplier (uniform(0.70, 0.95)) to maximize pattern matching for acquisition.
+**Layer 3 — Symbolic Enforcement (`core/auction.py` → `core/guardrails.py`):** The `BudgetGuardrail` intercepts every raw bid and applies multi-layer rules:
+- **Soft warning** at 20% remaining budget
+- **Hard cap** (5% of remaining) at 10%
+- **Emergency floor** (1% of total) at 5%
 
-**2. SYMBOLIC (Math) POD Cluster (core/nash_solver.py)**
+The VCG second-price mechanism then allocates impressions and determines payments.
 
-The right cluster is the NashEquilibriumOptimization system. This is the symbolic counterpart, defining mathematical guarantees, linear constraints, and optimal mixed-strategy equilibrium conditions.
+### Execution Flow
 
-- *Staggered Win Probability:* The conceptual diagram notes probabilistic inference. When deterministic bidding loops failed in testing, the solution was moving to an iterative best-response solver with Monte Carlo noise. The NashEquilibriumSolver (nash_solver.py) now runs Monte Carlo simulations (5000 samples) to compute smooth, probabilistic win curves for any given bid level, enabling the staggered equilibrium requested by the developer.
-- *Expected Utility:* The solver calculates an agent's Expected Utility = (Valuation - Bid) × WinProbability.
-- *Solver Convergence:* The core of the solver relies on a softmax transformation with temperature annealing. Iterative loops continue (iter &lt; 100) until the standard symbolic criteria—convergence &lt; 0.01—is met.
+```
+POST /simulation/run
+    │
+    ├─► SimulationRunner (core/simulation_runner.py)
+    │       │
+    │       └─► for round in num_rounds:
+    │               await engine.run_round(agents)
+    │                   │
+    │                   ├─► Phase 1: asyncio.gather(
+    │                   │       agent.decide_bid(),  ← per agent
+    │                   │       agent.decide_bid(),
+    │                   │       ...
+    │                   │   )
+    │                   │
+    │                   └─► Phase 2: guardrail.check() → VCG resolution
+    │
+    ├─► NashEquilibriumSolver (post-hoc)
+    │       vectorized Monte Carlo (5000 samples)
+    │
+    └─► Persist results to database
+```
 
-**3. HYBRID REASONING Layer POD (core/agents.py &amp; core/guardrails.py)**
+### Async Parallel Execution
 
-The central bottom cluster shows the core/agents.py, core/guardrails.py, and core/auction.py modules collaborating to enforce the neuro-symbolic feedback loop.
+All LLM inferences within a single auction round execute concurrently:
 
-- *Initialization (Hybrid Flow):* A POST /simulation/run (api/main.py) starts an async execution.
-- *Proposal (Neural → Hybrid):* The autonomous BrandAgent (agents.py) requests a bid decision. The Neural (LLM) Pod proposes a strategy (bid amount, spend cap).
-- *Validation (Hybrid → Symbolic):* The symbolic pod validates the proposal. The BudgetGuardrail (guardrails.py) enforces a strict linear constraint: the raw bid is capped at a hard threshold (remaining × 0.2 per bid) to prevent catastrophic depletion.
-- *Enforcement (Orchestration):* The finalized, validated bids move into the AuctionEngine (auction.py), which resolves the mechanics (Symbolic/Logic, VCG second-price format).
+```python
+# core/auction.py — Phase 1
+bid_tasks = [
+    agent.decide_bid(market_price=..., recent_history=...)
+    for agent in active_agents
+]
+raw_results = await asyncio.gather(*bid_tasks)  # All agents think simultaneously
+```
 
+With real LLM latency (e.g., 2s per call), a 5-agent round drops from ~10s sequential to ~2s parallel.
 
-This diagram shows how the conceptual Neuro-Symbolic blocks map to concrete code modules. The system uses a clean separation of concerns, persistent data models, and asynchronous execution (api/main.py) to orchestrate the hybrid reasoning process.
+### Nash Equilibrium Solver
 
-### 3. The Nash Algorithm
+The post-hoc Nash solver (`core/nash_solver.py`) computes optimal mixed strategies using:
 
-#### The Problem: The Tragedy of the Commons in Ad Auctions
-
-Without equilibrium analysis, agents engage in destructive bidding wars:
-
-| Scenario | Without Nash | With Nash Equilibrium |
-|:---------|:-------------|:---------------------|
-| Bidding dynamics | Nike $10 → Adidas $11 → Puma $12 → Nike $13… (escalation) | Nike $3.20, Adidas $2.80, Puma $2.50 (stable) |
-| CPA trajectory | Explodes every round | Predictable, bounded |
-| Budget depletion | Days | Campaign-long |
-| Market stability | Volatile clearing prices | Predictable clearing prices |
-
-#### How It Works: Iterative Best-Response with Softmax
+1. **Vectorized Monte Carlo** — `np.random.choice` samples opponent bids in bulk; broadcasting compares all candidate bids simultaneously (no Python loops over bid levels)
+2. **Iterative best-response** with softmax temperature annealing
+3. **Per-agent bid levels** derived from CPA × role range for differentiated equilibria
 
 ```text
 for iteration in range(max_iterations):
     for each agent:
-        # Compute expected utility for every bid level
-        # given opponents' current mixed strategies
-        utilities = [expected_profit(bid, opponent_strategies)
-                     for bid in bid_levels]
-
-        # Softmax best response (temperature annealing)
-        # High temp early = exploration. Low temp late = convergence.
-        new_strategy = softmax(utilities / temperature)
-
-    # Check convergence: did any agent's strategy change significantly?
+        utilities = vectorized_expected_utility(my_bids, opponent_strategies)
+        new_strategy = softmax(utilities / temperature)  # annealing
     if max_strategy_change < tolerance:
-        break  # Nash equilibrium found!
+        break  # Nash equilibrium found
 ```
 
-> **Mathematical guarantee:** At convergence, no agent can improve their expected utility by changing their strategy alone. This is the definition of Nash equilibrium.
+**Performance:** 3-agent solve in ~0.2s, 5-agent in ~1s (5000 MC samples).
 
-#### Runtime Flow
+### Observability
+
+OpenTelemetry tracing is woven through the entire execution chain:
 
 ```text
-┌──────────┐    ┌──────────┐    ┌──────────┐    ┌──────────┐    ┌──────────┐
-│ Configure│───▶│ Simulate │───▶│  Auction │───▶│   Nash   │───▶│ Analyze  │
-│  Agents  │    │  Rounds  │    │ (VCG)    │    │  Solver  │    │Dashboard │
-└──────────┘    └──────────┘    └──────────┘    └──────────┘    └──────────┘
-     │               │               │               │               │
-     │ Brand names   │ LLM decides   │ 2nd-price     │ Mixed-strategy│ Chart.js  │
-     │ Budgets, CPAs │ bids per round│ allocation    │ equilibrium   │ visuals   │
-     └───────────────┴───────────────┴───────────────┴───────────────┴───────────┘
+auction_round                              (core/auction.py)
+├── agent_decide_bid                       (core/agents.py)
+│   ├── planner_evaluate                   (core/planner.py)
+│   │   └── llm_inference                  (core/llm_engine.py)
+│   └── llm_inference                      (core/llm_engine.py)
+├── agent_decide_bid                       (parallel, per agent)
+│   └── ...
+└── [guardrail enforcement + VCG resolution]
+```
+
+**Span attributes** capture: agent name/strategy/bid, planner budget/win-rate, LLM model/provider/latency/tokens, auction impressions/revenue/clearing price, and guardrail interventions.
+
+Setup:
+```python
+from core.telemetry import setup_telemetry
+setup_telemetry("my-service", export_to_console=True)
 ```
 
 ---
 
-## 🚀 Quick Start
+## Quick Start
 
 ### Docker (Recommended)
 
@@ -183,9 +196,198 @@ pip install -r requirements.txt
 uvicorn api.main:app --reload
 ```
 
+### With Ollama
+
+```bash
+# Start Ollama with a model
+ollama pull llama3
+
+# Set environment variable
+export LLM_BACKEND=ollama
+export LLM_MODEL=llama3
+
+uvicorn api.main:app --reload
+```
+
+### With vLLM
+
+```bash
+# Start vLLM server (separate process)
+python -m vllm.entrypoints.openai.api_server --model meta-llama/Llama-3-8B
+
+# Set environment variable
+export LLM_BACKEND=vllm
+export LLM_MODEL=meta-llama/Llama-3-8B
+
+uvicorn api.main:app --reload
+```
+
 ---
 
-## 📊 Dashboard Features
+## Project Structure
+
+```
+nash-marketing-agents/
+├── api/
+│   ├── main.py              # FastAPI routes + background task orchestration
+│   └── schemas.py           # Pydantic request/response models
+├── core/
+│   ├── agents.py            # BrandAgent — autonomous bidding agent
+│   ├── auction.py           # AuctionEngine — VCG second-price mechanism
+│   ├── guardrails.py        # BudgetGuardrail — multi-layer budget enforcement
+│   ├── llm_engine.py        # LLM backends (Mock, Ollama, vLLM, Transformers)
+│   ├── market.py            # MarketSimulator — stochastic impression supply
+│   ├── nash_solver.py       # NashEquilibriumSolver — vectorized Monte Carlo
+│   ├── planner.py           # StrategyPlanner — neural tactical reasoning
+│   ├── prompts.py           # BrandPrompt — role-specific LLM prompts
+│   ├── simulation_runner.py # SimulationRunner — decoupled execution loop
+│   └── telemetry.py         # OpenTelemetry tracer setup
+├── configs/
+│   └── settings.py          # Pydantic Settings (env-based config)
+├── database/
+│   ├── connection.py        # Database init utilities
+│   └── models.py            # SQLAlchemy models (Simulation, Agent, Round)
+├── scripts/
+│   └── run_simulation.py    # CLI simulation runner
+├── static/
+│   └── index.html           # Dashboard UI (Chart.js)
+├── tests/
+│   ├── conftest.py          # Shared fixtures (MockLLM, agent factories)
+│   ├── test_agents.py       # Agent state, bid generation, async execution
+│   ├── test_api.py          # Endpoint health, Nash compute, error handling
+│   ├── test_auction.py      # VCG mechanics, budget depletion, history
+│   ├── test_e2e.py          # Full simulation lifecycle, role differentiation
+│   ├── test_guardrails.py   # Soft/hard/emergency caps, system status
+│   ├── test_llm_engine.py   # Ollama, vLLM, factory, contract tests
+│   ├── test_nash.py         # Convergence, distributions, performance benchmarks
+│   ├── test_planner.py      # Neural planner, fallback, win-rate calculator
+│   └── test_properties.py   # Economic invariants (monotonicity, IR, Nash bounds)
+├── requirements.txt
+├── Dockerfile
+├── docker-compose.yml
+└── README.md
+```
+
+---
+
+## LLM Backend Configuration
+
+The system supports four LLM backends, swappable via environment variable or factory function:
+
+| Backend | Provider String | Use Case | Requires |
+|:--------|:---------------|:---------|:---------|
+| **MockLLM** | `mock` | CI/CD, fast local dev | Nothing |
+| **Ollama** | `ollama` | Local GPU inference | `ollama` package + running server |
+| **vLLM** | `vllm` | High-throughput serving | `openai` package + running server |
+| **Transformers** | `transformers` | CPU/GPU inference | `torch`, `transformers` |
+
+### Factory Pattern
+
+```python
+from core.llm_engine import create_llm_engine
+
+# Mock (default)
+llm = create_llm_engine("mock")
+
+# Ollama
+llm = create_llm_engine("ollama", model="llama3", host="http://localhost:11434")
+
+# vLLM (OpenAI-compatible)
+llm = create_llm_engine("vllm", model="meta-llama/Llama-3-8B",
+                         base_url="http://localhost:8000/v1")
+
+# Legacy factory still works
+from core.llm_engine import LLMEngineFactory
+llm = LLMEngineFactory.create(use_mock=True)
+```
+
+### Configuration via Environment
+
+```bash
+# .env
+LLM_BACKEND=ollama          # mock | ollama | vllm | transformers
+LLM_MODEL=llama3
+DATABASE_URL=sqlite:///./nash_marketing.db
+LOG_LEVEL=INFO
+```
+
+---
+
+## How It Works
+
+1. **Configure** — Set brand names, roles, budgets, and target CPAs via the dashboard or API.
+
+2. **Plan** — Each agent's `StrategyPlanner` queries the LLM with budget %, recent win rate, and clearing prices to select a tactical strategy (`aggressive`, `balanced`, or `conserve`).
+
+3. **Synthesize** — The LLM receives the tactical strategy as its role and generates a structured bid (amount, max spend, justification) as JSON.
+
+4. **Enforce** — The `BudgetGuardrail` intercepts every raw bid and applies multi-layer caps (soft warning → hard cap → emergency floor).
+
+5. **Auction** — A second-price VCG auction allocates impressions to highest bidders. Winners pay the next-highest bid. Guardrail interventions are logged for observability.
+
+6. **Iterate** — Steps 2-5 repeat for each round. Early termination if fewer than 2 agents have remaining budget.
+
+7. **Equilibrium** — After all rounds, the Nash solver computes optimal mixed strategies using vectorized Monte Carlo with 5000 samples per bid level.
+
+8. **Analyze** — The dashboard renders budget depletion, agent performance radar, clearing price history, bid ranges, cumulative spend, and Nash equilibrium distribution.
+
+---
+
+## Testing
+
+```bash
+pytest tests/ -v
+```
+
+**92 tests** covering:
+
+| Module | Tests | What's Verified |
+|:-------|:------|:----------------|
+| `test_agents.py` | 9 | Agent initialization, async bid generation, state updates, CPA calculation |
+| `test_auction.py` | 6 | Empty auction, scarce supply, clearing price, revenue matching, budget depletion |
+| `test_properties.py` | 7 | **Monotonicity** (higher CPA → higher win rate), **Individual rationality** (no overpay), **Nash bounds** (convergence, expected bid ≤ valuation) |
+| `test_nash.py` | 12 | Convergence, distributions, clearing price bounds, per-agent levels, degenerate strategies, **performance benchmarks** |
+| `test_guardrails.py` | 6 | Soft warning, hard cap, emergency mode, system status aggregation |
+| `test_planner.py` | 14 | Neural strategy selection, fallback on invalid/empty/exception, win-rate calculator, history injection |
+| `test_llm_engine.py` | 23 | Ollama response parsing, vLLM response parsing, factory pattern, contract tests, edge cases |
+| `test_api.py` | 7 | Health endpoint, simulation lifecycle, Nash compute, error handling |
+| `test_e2e.py` | 6 | Full simulation lifecycle, role differentiation, budget guardrails, clearing price history, Nash equilibrium |
+
+---
+
+## Tech Stack
+
+| Layer | Technology |
+|:------|:-----------|
+| **LLM Backends** | MockLLM (instant) · Ollama (local GPU) · vLLM (high-throughput) · Transformers (CPU/GPU) |
+| **Planning** | Neural StrategyPlanner (LLM-powered tactical reasoning) |
+| **Guardrails** | BudgetGuardrail (3-tier symbolic enforcement) |
+| **Auction** | VCG second-price mechanism |
+| **Nash Solver** | Vectorized Monte Carlo (NumPy), iterative best-response with softmax |
+| **Observability** | OpenTelemetry (distributed tracing) |
+| **Async** | `asyncio.gather` for parallel agent inference |
+| **API** | FastAPI + Pydantic v2 |
+| **ORM** | SQLAlchemy 2.0 |
+| **Database** | SQLite (local) / PostgreSQL (production) |
+| **Dashboard** | Vanilla JS + Chart.js |
+| **Container** | Docker + docker-compose |
+| **Testing** | pytest + pytest-asyncio + unittest.mock |
+
+---
+
+## API Endpoints
+
+| Method | Endpoint | Description |
+|:-------|:---------|:------------|
+| `GET` | `/health` | System health check (API status, LLM backend, database) |
+| `POST` | `/simulation/run` | Start a new auction simulation (runs async, returns immediately) |
+| `GET` | `/simulations` | List all past simulations (newest first) |
+| `GET` | `/simulation/{id}` | Get full simulation detail (agents, rounds, Nash equilibrium) |
+| `POST` | `/nash/compute` | Compute Nash equilibrium for arbitrary agent configurations |
+
+---
+
+## Dashboard
 
 | Feature | Description |
 |:--------|:------------|
@@ -210,77 +412,24 @@ uvicorn api.main:app --reload
 
 ---
 
-## 🎮 How It Works
+## Refactoring History
 
-1. **Configure** — Set brand names, strategies (aggressive / balanced / conservative), budgets, and target CPAs via the dashboard form.
-2. **Simulate** — Each round, every agent queries its LLM with current market context (clearing price, competitor count, win rate, remaining budget) and receives a structured bid decision in JSON.
-3. **Auction** — A second-price VCG auction allocates impressions to the highest bidders. Winners pay the next-highest bid. Budget guardrails cap per-round spend at 20% of remaining budget.
-4. **Equilibrium** — After all rounds complete, the Nash solver iteratively computes optimal mixed strategies using softmax best-response dynamics with temperature annealing.
-5. **Analyze** — The dashboard renders six charts (budget, agent performance radar, clearing price, bid range, cumulative spend, Nash equilibrium polar area) and an event log for post-hoc analysis.
+This codebase underwent an 8-step architectural refactor:
 
----
-
-## 🧪 Testing
-
-```bash
-pytest tests/ -v
-```
-
-49 tests covering:
-
-| Module | Tests | What's Verified |
-|:-------|:------|:----------------|
-| `tests/test_agents.py` | 9 | Agent initialization, bid generation, state updates, CPA calculation |
-| `tests/test_auction.py` | 6 | Empty auction, scarce supply, clearing price, revenue matching, budget depletion |
-| `tests/test_properties.py` | 7 | **Monotonicity** (higher CPA → higher win rate), **Individual rationality** (no overpay, budget guardrails), **Nash bounds** (convergence, expected bid ≤ valuation) |
-| `tests/test_nash.py` | 6 | Convergence, strategy validity, expected bid ranges, clearing price bounds |
-| `tests/test_guardrails.py` | 8 | Soft warning, hard cap, emergency mode, system status aggregation |
-| `tests/test_api.py` | 7 | Health endpoint, simulation lifecycle, Nash compute, error handling |
-| `tests/test_e2e.py` | 6 | Full simulation lifecycle, role differentiation, budget guardrails, clearing price history, Nash equilibrium validation |
+| Step | What Changed | Key Files |
+|:-----|:-------------|:----------|
+| **1. SimulationRunner** | Extracted execution loop from API layer into isolated `SimulationRunner` class | `core/simulation_runner.py` |
+| **2. Ghost Guardrail** | Removed hardcoded budget cap from agent; wired `BudgetGuardrail` into `AuctionEngine` | `core/auction.py`, `core/agents.py` |
+| **3. Multi-Turn Planner** | Added `StrategyPlanner` for temporal awareness — agents adapt strategy based on market history | `core/planner.py` |
+| **4. Neural Planner** | Upgraded `StrategyPlanner` from heuristic if/else to LLM-powered reasoning | `core/planner.py`, `core/llm_engine.py` |
+| **5. Nash Solver Optimization** | Vectorized Monte Carlo with NumPy broadcasting — 5-agent solve in <1s | `core/nash_solver.py` |
+| **6. Async Execution** | Converted entire chain to `async/await`; `asyncio.gather` for parallel agent inference | `core/auction.py`, `core/agents.py`, `core/planner.py` |
+| **7. LLM Backend Support** | Added native async `OllamaEngine` and `VLLMEngine` with factory pattern | `core/llm_engine.py` |
+| **8. OpenTelemetry** | Distributed tracing across `auction_round` → `agent_decide_bid` → `planner_evaluate` → `llm_inference` | `core/telemetry.py` |
 
 ---
 
-## 📦 Tech Stack
-
-| Layer | Technology |
-|:---|:---|
-| **LLM** | MockLLM (default, instant) / Transformers CPU (optional, real inference) |
-| **Math** | NumPy + SciPy (Nash equilibrium, optimization) |
-| **Database** | SQLite (local) / PostgreSQL (production) |
-| **API** | FastAPI + Pydantic v2 |
-| **ORM** | SQLAlchemy 2.0 |
-| **Dashboard** | Vanilla JS + Chart.js |
-| **Container** | Docker + docker-compose |
-| **Testing** | pytest + pytest-asyncio |
-
----
-
-## 📝 API Endpoints
-
-| Method | Endpoint | Description |
-|:---|:---|:---|
-| `GET` | `/health` | System health check (API status, LLM backend, database) |
-| `POST` | `/simulation/run` | Start a new auction simulation (runs async, returns immediately) |
-| `GET` | `/simulations` | List all past simulations (newest first) |
-| `GET` | `/simulation/{id}` | Get full simulation detail (agents, rounds, Nash equilibrium) |
-| `POST` | `/nash/compute` | Compute Nash equilibrium for arbitrary agent configurations |
-
----
-
-## 🔮 Future Integration
-
-This project is designed to integrate with [autonomous-procurement-swarm](https://github.com/aragit/autonomous-procurement-swarm):
-
-| Procurement Swarm | Nash Marketing Agents | Integration Point |
-|:---|:---|:---|
-| Bilateral negotiation | N-player competitive auction | Shared LLM engine |
-| Buyer vs. Seller | Brand vs. Brand | Shared PostgreSQL ledger |
-| Pareto efficiency | Nash equilibrium | Unified dashboard |
-| Cost minimization | Budget preservation | Cross-domain analytics |
-
----
-
-## 🤝 Contributing
+## Contributing
 
 1. Fork the repository
 2. Create a feature branch: `git checkout -b feat/your-feature`
@@ -289,10 +438,10 @@ This project is designed to integrate with [autonomous-procurement-swarm](https:
 5. Push: `git push origin feat/your-feature`
 6. Open a Pull Request against `main`
 
-Please ensure all 49 tests pass before submitting.
+Please ensure all 92 tests pass before submitting.
 
 ---
 
-## 📄 License
+## License
 
 MIT — see [LICENSE](LICENSE) for details.

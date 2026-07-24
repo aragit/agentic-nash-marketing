@@ -21,7 +21,8 @@ class TestMonotonicity:
     def engine(self):
         return AuctionEngine(MarketSimulator(seed=42))
 
-    def test_higher_cpa_higher_win_rate(self, engine):
+    @pytest.mark.asyncio
+    async def test_higher_cpa_higher_win_rate(self, engine):
         """Agents with higher CPA should win more (same role isolates CPA)."""
         llm = MockLLMEngine(seed=42)
         agents = [
@@ -30,13 +31,14 @@ class TestMonotonicity:
             BrandAgent("High", "balanced", 5000, 100, llm),
         ]
         for _ in range(20):
-            engine.run_round(agents)
+            await engine.run_round(agents)
         rates = [a.state.win_rate for a in agents]
         assert rates[2] >= rates[1] >= rates[0], (
             f"Monotonicity violated: Low={rates[0]:.1%}, Mid={rates[1]:.1%}, High={rates[2]:.1%}"
         )
 
-    def test_higher_cpa_higher_bid(self, engine):
+    @pytest.mark.asyncio
+    async def test_higher_cpa_higher_bid(self, engine):
         """Bid should increase monotonically with CPA."""
         llm = MockLLMEngine(seed=42)
         agents = [
@@ -47,7 +49,7 @@ class TestMonotonicity:
         all_bids = {a.name: [] for a in agents}
         for _ in range(5):
             for a in agents:
-                result = a.decide_bid(market_price=2.50, competitor_count=2, available_impressions=5)
+                result = await a.decide_bid(market_price=2.50, competitor_count=2, available_impressions=5)
                 all_bids[a.name].append(result["bid"])
         avg_bids = {name: sum(bids) / len(bids) for name, bids in all_bids.items()}
         assert avg_bids["High"] > avg_bids["Mid"] > avg_bids["Low"], (
@@ -71,19 +73,21 @@ class TestIndividualRationality:
             BrandAgent("Puma", "conservative", 5000, 80, llm),
         ]
 
-    def test_clearing_price_never_exceeds_winning_bid(self, engine, agents):
+    @pytest.mark.asyncio
+    async def test_clearing_price_never_exceeds_winning_bid(self, engine, agents):
         """Second-price guarantee: winner pays ≤ own bid."""
         for _ in range(10):
-            result = engine.run_round(agents)
+            result = await engine.run_round(agents)
             for w in result.winners:
                 assert w["paid"] <= w["bid"] + 0.01, (
                     f"{w['agent_name']} paid ${w['paid']:.2f} > bid ${w['bid']:.2f}"
                 )
 
-    def test_bid_within_budget_guardrail(self, engine, agents):
+    @pytest.mark.asyncio
+    async def test_bid_within_budget_guardrail(self, engine, agents):
         """Bid should never exceed 20% of pre-round remaining budget."""
         for _ in range(10):
-            result = engine.run_round(agents)
+            result = await engine.run_round(agents)
             for entry in result.winners + result.losers:
                 pre_remaining = entry["remaining_budget"] + entry.get("paid", 0)
                 max_allowed = pre_remaining * 0.2 + 0.01

@@ -16,9 +16,10 @@ class TestBrandAgent:
         assert nike_agent.state.remaining_budget == 5000.0
         assert nike_agent.state.target_cpa == 30.0
 
-    def test_decide_bid_returns_valid_structure(self, nike_agent):
+    @pytest.mark.asyncio
+    async def test_decide_bid_returns_valid_structure(self, nike_agent):
         """Bid decision should return required fields."""
-        result = nike_agent.decide_bid(
+        result = await nike_agent.decide_bid(
             market_price=3.50,
             competitor_count=2,
             available_impressions=100,
@@ -29,12 +30,12 @@ class TestBrandAgent:
         assert "strategy" in result
         assert "justification" in result
 
-    def test_bid_is_positive(self, nike_agent):
+    @pytest.mark.asyncio
+    async def test_bid_is_positive(self, nike_agent):
         """Bid should always be positive."""
-        result = nike_agent.decide_bid(3.50, 2, 100)
+        result = await nike_agent.decide_bid(3.50, 2, 100)
         assert result["bid"] > 0
 
-    
     def test_agent_updates_state_after_win(self, nike_agent):
         """Winning should reduce remaining budget."""
         initial = nike_agent.state.remaining_budget
@@ -65,8 +66,10 @@ class TestBrandAgent:
         nike_agent.observe_result(won=True, bid=100.0, conversions=0)
         assert nike_agent.state.effective_cpa == float('inf')
 
-    def test_bid_cannot_exceed_remaining_budget(self, nike_agent):
-        """Bid should be capped at 20% of remaining budget."""
+    @pytest.mark.asyncio
+    async def test_bid_returns_raw_llm_proposal(self, nike_agent):
+        """Agent should return the raw LLM bid without inline caps — guardrail is in the engine."""
         nike_agent.state.remaining_budget = 100.0
-        result = nike_agent.decide_bid(50.0, 2, 100)
-        assert result["bid"] <= 20.0  # 20% of 100
+        result = await nike_agent.decide_bid(50.0, 2, 100)
+        # The bid is whatever the LLM proposed (target_cpa × role_pct), not capped here
+        assert result["bid"] > 0

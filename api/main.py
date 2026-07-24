@@ -19,6 +19,7 @@ from core.market import MarketSimulator
 from core.auction import AuctionEngine
 from core.nash_solver import NashEquilibriumSolver
 from core.guardrails import BudgetGuardrail
+from core.simulation_runner import SimulationRunner
 from api.schemas import (
     RunSimulationRequest, SimulationSummary, SimulationDetail,
     AgentPerformance, NashEquilibriumResponse, HealthResponse,
@@ -125,11 +126,12 @@ async def run_simulation(
 
             thread_db.commit()
 
-            # Run rounds
-            for round_num in range(request.rounds):
-                result = engine.run_round(agents)
+            # --- Core simulation loop (decoupled from API/DB) ---
+            runner = SimulationRunner(engine=engine, agents=agents, num_rounds=request.rounds)
+            final_state = asyncio.run(runner.run())
 
-                # Record round
+            # --- Persist round results at the API boundary ---
+            for result in final_state["history"]:
                 round_record = AuctionRound(
                     simulation_id=sim_id,
                     round_number=result.round_number,
@@ -145,34 +147,28 @@ async def run_simulation(
                 )
                 thread_db.add(round_record)
 
-                # Update agent records
-                for agent in agents:
-                    record = thread_db.query(AgentRecord).filter_by(
-                        simulation_id=sim_id, name=agent.name
-                    ).first()
-                    if record:
-                        record.remaining_budget = agent.state.remaining_budget
-                        record.impressions_won = agent.state.impressions_won
-                        record.total_spent = agent.state.total_spent
-                        record.total_conversions = agent.state.total_conversions
-                        record.final_win_rate = agent.state.win_rate
-                        record.final_strategy = agent.state.role
+            # Update final agent records
+            for agent_state in final_state["agents"]:
+                record = thread_db.query(AgentRecord).filter_by(
+                    simulation_id=sim_id, name=agent_state["name"]
+                ).first()
+                if record:
+                    record.remaining_budget = agent_state["remaining_budget"]
+                    record.impressions_won = agent_state["impressions_won"]
+                    record.total_spent = agent_state["total_spent"]
+                    record.total_conversions = agent_state["total_conversions"]
+                    record.final_win_rate = agent_state["win_rate"]
+                    record.final_strategy = agent_state["role"]
 
-                thread_db.commit()
+            thread_db.commit()
 
-                # Stop if all budgets depleted
-                active = [a for a in agents if a.state.remaining_budget > 0]
-                if len(active) < 2:
-                    logger.info(f"Simulation ended early at round {round_num + 1}: only {len(active)} agents active")
-                    break
-
-            # Finalize simulation immediately — set completed BEFORE slow Nash solver
+            # Finalize simulation — set completed BEFORE slow Nash solver
             sim_record = thread_db.query(Simulation).filter(Simulation.id == sim_id).first()
             if sim_record:
                 sim_record.status = "completed"
-                sim_record.total_rounds = len(engine.history)
-                sim_record.total_revenue = sum(r.total_revenue for r in engine.history)
-                sim_record.final_clearing_price = engine.history[-1].clearing_price if engine.history else 0.0
+                sim_record.total_rounds = final_state["total_rounds"]
+                sim_record.total_revenue = final_state["total_revenue"]
+                sim_record.final_clearing_price = final_state["final_clearing_price"]
                 thread_db.commit()
 
             llm.shutdown()
