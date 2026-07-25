@@ -17,10 +17,26 @@
   <img src="https://img.shields.io/badge/License-MIT-green" alt="MIT">
 </p>
 
+Autonomous AI brand agents compete in real-time ad auctions using a **neuro-symbolic architecture**. Each agent runs a three-layer pipeline: a **Neural Strategic Planner** (LLM) reasons about budget state, win rates, and market dynamics to select a tactical strategy; a **Neural Bid Synthesizer** (Ollama/vLLM) generates structured JSON bids with justification; and a **Symbolic Guardrail Engine** enforces budget caps and risk thresholds before a **VCG second-price auction mechanism** mathematically guarantees fair, incentive-compatible pricing. A **vectorized Nash equilibrium solver** (NumPy) computes optimal mixed strategies post-hoc. The entire pipeline is instrumented with **OpenTelemetry distributed tracing** and streams per-agent events in real-time via **Server-Sent Events** to a live Tailwind dashboard with Chart.js visualizations.
+
+---
+
+## Why This Matters
+
+| Problem | Impact | Our Solution |
+|:--------|:-------|:-------------|
+| Advertisers waste 30%+ of spend on suboptimal bidding | Proven optimal strategies exist via Nash equilibrium | Post-hoc Nash solver with vectorized Monte Carlo |
+| Auction platforms lose revenue from unstable bidding wars | Equilibrium stabilizes clearing prices | Game-theoretic mixed-strategy convergence |
+| Campaign managers rely on rules-of-thumb, not game theory | Data-driven strategy replaces intuition | LLM-powered agents with adaptive neural planning |
+| Multi-agent systems are slow when agents think sequentially | 5 agents x 2s = 10s per round | `asyncio.gather` parallel bid computation with per-agent SSE streaming |
+| Debugging concurrent LLM calls is impossible with logs alone | Cannot see who decided what and why | OpenTelemetry distributed tracing across planner, synthesizer, and guardrail |
+| API endpoints timeout during heavy LLM inference | Silent failures and broken frontends | Per-agent SSE yielding keeps connections alive through 2+ minute inference windows |
+
 ---
 
 ## Table of Contents
 
+- [Why This Matters](#why-this-matters)
 - [Architecture Overview](#architecture-overview)
   - [System Topology](#system-topology)
   - [Neuro-Symbolic Pipeline](#neuro-symbolic-pipeline)
