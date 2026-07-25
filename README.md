@@ -73,7 +73,7 @@ Rather than relying on unconstrained LLM outputs, every decision executes throug
 - [📡 API Reference](#-api-reference)
 - [🧪 Test Suite](#-test-suite)
 - [🔮 Future Work](#-future-work)
-- [📝 Contributing](#-contributing)
+- [🤝 Contributing](#-contributing)
 - [📜 License](#-license)
 
 ---
@@ -420,7 +420,7 @@ We are actively expanding the agentic capabilities of this engine. Contributions
 
 ---
 
-## 📝 Contributing
+## 🤝 Contributing
 
 Contributions are welcome. Here's how to get started:
 
