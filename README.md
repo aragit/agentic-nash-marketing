@@ -4,6 +4,10 @@
 <p align="center"><sub>FastAPI · Server-Sent Events (SSE) · TailwindCSS · Ollama · vLLM · NumPy · OpenTelemetry</sub></p>
 
 <p align="center">
+  <img src="assets/ban.png" alt="Agentic Nash Marketing Banner" width="100%">
+</p>
+
+<p align="center">
   <img src="https://img.shields.io/badge/Status-Production%20Ready-brightgreen" alt="Production Ready">
   <img src="https://img.shields.io/badge/Python-3.12+-blue?logo=python" alt="Python">
   <img src="https://img.shields.io/badge/FastAPI-0.110+-teal?logo=fastapi" alt="FastAPI">
@@ -11,10 +15,6 @@
   <img src="https://img.shields.io/badge/LLM-Mock%20%7C%20Ollama%20%7C%20vLLM-yellow" alt="LLM Backends">
   <img src="https://img.shields.io/badge/Tests-92%20Passing-brightgreen?logo=pytest" alt="Tests">
   <img src="https://img.shields.io/badge/License-MIT-green" alt="MIT">
-</p>
-
-<p align="center">
-  <img src="assets/ban.png" alt="Agentic Nash Marketing Banner" width="100%">
 </p>
 
 ---
