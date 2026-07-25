@@ -28,7 +28,7 @@ Autonomous AI brand agents compete in real-time ad auctions using a **neuro-symb
 
 ---
 
-## Why This Matters
+## 💡 Why This Matters
 
 | Problem | Impact | Our Solution |
 |:--------|:-------|:-------------|
@@ -41,30 +41,30 @@ Autonomous AI brand agents compete in real-time ad auctions using a **neuro-symb
 
 ---
 
-## Table of Contents
+## 📋 Table of Contents
 
-- [Why This Matters](#why-this-matters)
-- [Architecture Overview](#architecture-overview)
-  - [System Topology](#system-topology)
-  - [Neuro-Symbolic Pipeline](#neuro-symbolic-pipeline)
-  - [Deterministic vs. LLM Planning](#deterministic-vs-llm-planning)
-  - [Real-Time SSE Streaming](#real-time-sse-streaming)
-  - [Observability](#observability)
-- [Refactor Scorecard](#refactor-scorecard)
-- [Quick Start](#quick-start)
-- [LLM Backend Configuration](#llm-backend-configuration)
-- [Live Dashboard](#live-dashboard)
-- [API Reference](#api-reference)
-- [Test Suite](#test-suite)
-- [Future Work](#future-work)
-- [Contributing](#contributing)
-- [License](#license)
+- [💡 Why This Matters](#-why-this-matters)
+- [🏗️ Architecture Overview](#-architecture-overview)
+  - [📐 System Topology](#-system-topology)
+  - [🧠 Neuro-Symbolic Pipeline](#-neuro-symbolic-pipeline)
+  - [🔬 Deterministic vs. LLM Planning](#-deterministic-vs-llm-planning)
+  - [🔄 Real-Time SSE Streaming](#-real-time-sse-streaming)
+  - [🔍 Observability](#-observability)
+- [📊 Refactor Scorecard](#-refactor-scorecard)
+- [🚀 Quick Start](#-quick-start)
+- [⚙️ LLM Backend Configuration](#️-llm-backend-configuration)
+- [📈 Live Dashboard](#-live-dashboard)
+- [📡 API Reference](#-api-reference)
+- [🧪 Test Suite](#-test-suite)
+- [🔮 Future Work](#-future-work)
+- [📝 Contributing](#-contributing)
+- [📜 License](#-license)
 
 ---
 
-## Architecture Overview
+## 🏗️ Architecture Overview
 
-### System Topology
+### 📐 System Topology
 
 ```
                            [ API / DB Boundary ]
@@ -100,7 +100,7 @@ Autonomous AI brand agents compete in real-time ad auctions using a **neuro-symb
                                 (NumPy)
 ```
 
-### Neuro-Symbolic Pipeline
+### 🧠 Neuro-Symbolic Pipeline
 
 The system implements a three-layer neuro-symbolic architecture:
 
@@ -135,7 +135,7 @@ The system implements a three-layer neuro-symbolic architecture:
 └─────────────────────────────────────────────────────────────┘
 ```
 
-### Deterministic vs. LLM Planning
+### 🔬 Deterministic vs. LLM Planning
 
 The system supports two planning modes, selectable at runtime:
 
@@ -150,7 +150,7 @@ The system supports two planning modes, selectable at runtime:
 
 The **LLM planner is the recommended mode** for maximizing agent autonomy. The symbolic `BudgetGuardrail` acts as a safety net regardless of which planner is active — the agent is a pure neural proposer, and the guardrail is the single source of truth for rule enforcement.
 
-### Real-Time SSE Streaming
+### 🔄 Real-Time SSE Streaming
 
 The simulation engine uses `asyncio.wait(FIRST_COMPLETED)` instead of `asyncio.gather()`. The `SimulationRunner.stream_run()` yields events **exactly when an individual agent's LLM finishes inference**, ensuring the SSE socket stays alive and the UI updates organically, even during heavy CPU-bound Ollama workloads.
 
@@ -176,7 +176,7 @@ SSE Response → Browser UI live updates
 | `round_complete` | Auction round fully resolved | Clearing price, revenue, impressions |
 | `complete` | Simulation finished | Full history, final agent states |
 
-### Observability
+### 🔍 Observability
 
 The system integrates **OpenTelemetry** distributed tracing across the entire inference pipeline:
 
@@ -203,7 +203,7 @@ python scripts/demo_terminal_tracing.py
 
 ---
 
-## Refactor Scorecard
+## 📊 Refactor Scorecard
 
 | Domain | Initial State | Refactored State | Impact |
 |:-------|:-------------|:-----------------|:-------|
@@ -218,9 +218,9 @@ python scripts/demo_terminal_tracing.py
 
 ---
 
-## Quick Start
+## 🚀 Quick Start
 
-### Docker (Recommended)
+### 🐳 Docker (Recommended)
 
 ```bash
 git clone https://github.com/aragit/nash-marketing-agents.git
@@ -230,7 +230,7 @@ docker-compose up --build
 
 Open `http://localhost:8000` for the dashboard.
 
-### Local Development
+### 💻 Local Development
 
 ```bash
 python -m venv venv
@@ -239,7 +239,7 @@ pip install -r requirements.txt
 uvicorn api.main:app --reload
 ```
 
-### SSE Streaming Dashboard
+### 🔄 SSE Streaming Dashboard
 
 ```bash
 # Start the SSE server
@@ -248,7 +248,7 @@ uvicorn api.server:app --reload
 # Open dashboard.html directly in your browser (no web server needed)
 ```
 
-### With Ollama
+### 🤖 With Ollama
 
 ```bash
 # Start Ollama with a model
@@ -260,7 +260,7 @@ uvicorn api.server:app --reload
 
 Or select the Ollama backend directly from the dashboard UI dropdown.
 
-### With vLLM
+### 🚀 With vLLM
 
 ```bash
 # Start vLLM server (separate process)
@@ -275,7 +275,7 @@ uvicorn api.main:app --reload
 
 ---
 
-## LLM Backend Configuration
+## ⚙️ LLM Backend Configuration
 
 The system supports multiple LLM backends via a unified factory pattern:
 
@@ -297,7 +297,7 @@ llm = create_llm_engine(provider="mock")
 
 ---
 
-## Live Dashboard
+## 📈 Live Dashboard
 
 The repository includes a single-file, zero-dependency (vanilla JS + Tailwind CDN + Chart.js) real-time dashboard.
 
@@ -333,9 +333,9 @@ uvicorn api.server:app --reload
 
 ---
 
-## API Reference
+## 📡 API Reference
 
-### SSE Streaming Endpoint
+### 📡 SSE Streaming Endpoint
 
 ```
 GET /api/v1/simulate/stream
@@ -354,7 +354,7 @@ GET /api/v1/simulate/stream
 curl -N "http://localhost:8000/api/v1/simulate/stream?num_agents=5&num_rounds=3&backend=ollama&model=qwen2.5:1.5b"
 ```
 
-### REST Endpoints
+### 🌐 REST Endpoints
 
 | Method | Path | Description |
 |:-------|:-----|:------------|
@@ -366,7 +366,7 @@ curl -N "http://localhost:8000/api/v1/simulate/stream?num_agents=5&num_rounds=3&
 
 ---
 
-## Test Suite
+## 🧪 Test Suite
 
 92 tests across 11 test files covering every layer of the neuro-symbolic pipeline:
 
@@ -392,7 +392,7 @@ pytest tests/ -v
 
 ---
 
-## Future Work
+## 🔮 Future Work
 
 We are actively expanding the agentic capabilities of this engine. Contributions are welcome for the following roadmap items:
 
@@ -404,7 +404,7 @@ We are actively expanding the agentic capabilities of this engine. Contributions
 
 ---
 
-## Contributing
+## 📝 Contributing
 
 Contributions are welcome. Here's how to get started:
 
@@ -424,6 +424,6 @@ Contributions are welcome. Here's how to get started:
 
 ---
 
-## License
+## 📜 License
 
 MIT — see LICENSE for details.
