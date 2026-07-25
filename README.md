@@ -19,14 +19,6 @@
 
 ---
 
-You have officially transformed a monolithic FastAPI/SQLAlchemy simulation script into a **modular, high-throughput, observable neuro-symbolic platform**.
-
-Autonomous AI brand agents compete in real-time ad auctions using a **neuro-symbolic architecture**: a neural LLM proposes strategies, a symbolic planner reasons about market trends, a guardrail enforces budget rules, and a vectorized Nash equilibrium solver computes optimal mixed strategies.
-
-The engine features per-agent **Server-Sent Events (SSE) streaming**, allowing you to watch the LLMs think, shift strategies, and bid in real-time via a Tailwind dashboard with live Chart.js visualizations.
-
----
-
 ## Table of Contents
 
 - [Architecture Overview](#architecture-overview)
