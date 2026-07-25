@@ -134,16 +134,16 @@ async def run_simulation(
             for result in final_state["history"]:
                 round_record = AuctionRound(
                     simulation_id=sim_id,
-                    round_number=result.round_number,
-                    clearing_price=result.clearing_price,
-                    total_revenue=result.total_revenue,
-                    available_impressions=result.market_state.available_impressions,
-                    audience_quality=result.market_state.audience_quality,
-                    seasonality=result.market_state.seasonality_factor,
-                    winner_count=len(result.winners),
-                    loser_count=len(result.losers),
-                    winners=result.winners,
-                    losers=result.losers,
+                    round_number=result["round_number"],
+                    clearing_price=result["clearing_price"],
+                    total_revenue=result["total_revenue"],
+                    available_impressions=result.get("available_impressions", 0),
+                    audience_quality=result.get("audience_quality", 0.0),
+                    seasonality=result.get("seasonality", 1.0),
+                    winner_count=len(result.get("winners", [])),
+                    loser_count=len(result.get("losers", [])),
+                    winners=result.get("winners", []),
+                    losers=result.get("losers", []),
                 )
                 thread_db.add(round_record)
 

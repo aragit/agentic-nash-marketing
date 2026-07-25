@@ -279,6 +279,9 @@ class SimulationRunner:
                     "total_revenue": r.total_revenue,
                     "winners": r.winners,
                     "losers": r.losers,
+                    "available_impressions": r.market_state.available_impressions,
+                    "audience_quality": r.market_state.audience_quality,
+                    "seasonality": r.market_state.seasonality_factor,
                 }
                 for r in history
             ],

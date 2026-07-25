@@ -77,6 +77,7 @@ class TestOllamaEngine:
             model="mistral",
             messages=msgs,
             options={"temperature": 0.3, "num_predict": 256},
+            format="json",
         )
 
     @pytest.mark.asyncio
