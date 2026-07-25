@@ -13,6 +13,10 @@
   <img src="https://img.shields.io/badge/License-MIT-green" alt="MIT">
 </p>
 
+<p align="center">
+  <img src="assets/ban.png" alt="Agentic Nash Marketing Banner" width="100%">
+</p>
+
 ---
 
 You have officially transformed a monolithic FastAPI/SQLAlchemy simulation script into a **modular, high-throughput, observable neuro-symbolic platform**.
@@ -37,8 +41,8 @@ The engine features per-agent **Server-Sent Events (SSE) streaming**, allowing y
 - [Live Dashboard](#live-dashboard)
 - [API Reference](#api-reference)
 - [Test Suite](#test-suite)
-- [Refactoring History](#refactoring-history)
 - [Future Work](#future-work)
+- [Contributing](#contributing)
 - [License](#license)
 
 ---
@@ -363,17 +367,6 @@ pytest tests/ -v
 
 ---
 
-## Refactoring History
-
-| Step | What Changed |
-|:-----|:-------------|
-| 1-7 | Monolithic separation, Multi-turn reasoning, Nash Solver Vectorization, Async execution, Factory patterns. |
-| 8. Observability | Distributed OpenTelemetry tracing across the entire inference pipeline. |
-| 9. Live Streaming | Added FastAPI SSE endpoint, real-time Tailwind dashboard, and Ollama integration with semantic strategy aliases. |
-| 10. Enterprise UI | Chart.js live visualizations, glassmorphism design, SVG agent avatars, count-up animations, data export. |
-
----
-
 ## Future Work
 
 We are actively expanding the agentic capabilities of this engine. Contributions are welcome for the following roadmap items:
@@ -383,6 +376,26 @@ We are actively expanding the agentic capabilities of this engine. Contributions
 - **Agent Collusion Detection:** Implementing symbolic rules to detect if LLM agents are intentionally colluding to artificially lower the VCG clearing price over extended time horizons.
 - **Multi-Round Memory:** Persistent agent memory across simulation sessions for long-horizon strategic adaptation.
 - **WebSocket Upgrade:** Bidirectional communication for real-time agent intervention and parameter tuning mid-simulation.
+
+---
+
+## Contributing
+
+Contributions are welcome. Here's how to get started:
+
+1. **Fork** the repository and create a feature branch (`git checkout -b feature/amazing-feature`)
+2. **Install** dependencies: `pip install -r requirements.txt`
+3. **Run tests** to ensure nothing is broken: `pytest tests/ -v`
+4. **Commit** your changes (`git commit -m 'Add amazing feature'`)
+5. **Push** to your branch (`git push origin feature/amazing-feature`)
+6. **Open a Pull Request** with a clear description of what changed and why
+
+**Development guidelines:**
+- Follow the existing neuro-symbolic architecture pattern (neural proposer + symbolic enforcer)
+- Add tests for new features — the suite uses `pytest` with `pytest-asyncio`
+- Keep `SimulationRunner` decoupled from API/DB concerns
+- Use `create_llm_engine()` factory for new LLM backends
+- Instrument new code with OpenTelemetry spans (`from core.telemetry import tracer`)
 
 ---
 
