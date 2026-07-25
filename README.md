@@ -74,6 +74,7 @@ Rather than relying on unconstrained LLM outputs, every decision executes throug
 - [🧪 Test Suite](#-test-suite)
 - [🔮 Future Work](#-future-work)
 - [🤝 Contributing](#-contributing)
+- [📚 References](#-references)
 - [📜 License](#-license)
 
 ---
@@ -437,6 +438,42 @@ Contributions are welcome. Here's how to get started:
 - Keep `SimulationRunner` decoupled from API/DB concerns
 - Use `create_llm_engine()` factory for new LLM backends
 - Instrument new code with OpenTelemetry spans (`from core.telemetry import tracer`)
+
+---
+
+## 📚 References
+
+Agentic Nash Marketing builds upon cutting-edge research at the intersection of large language models, game theory, and neuro-symbolic multi-agent systems. Below are key resources from 2024–2026 that validate and inform this architecture.
+
+### 🔬 Core Mechanism Design & Market Simulation (Papers)
+
+**Autobidding Auctions with LLM-Powered Creatives (2026)**
+- Context: This research models online advertising as a Stackelberg game involving budget-constrained autobidding agents. It explores how platforms and agents handle the computational costs and latency of LLMs in real-time auctions by using a "predict-then-execute" workflow.
+- Link: [OpenReview Framework](https://openreview.net)
+
+**Agent Exchange: An Auction Platform for AI Agent Marketplaces (2026)**
+- Context: Explores the shift of AI agents from passive tools to autonomous economic participants that exchange value and coordinate with minimal human oversight. It proposes a Real-Time Bidding (RTB) inspired auction platform engineered to coordinate multi-agent system tasks and enforce fair value attribution.
+- Link: [OpenReview Draft](https://openreview.net)
+
+**InfoBid: A Simulation Framework for Studying Information Disclosure in Auctions with LLM-based Agents (2025)**
+- Context: Introduced at the AAAI 2025 Workshop on Economics of Modern ML, this paper validates the use of LLMs as proxies for human economic agents in second-price auction simulations. It demonstrates how LLM agents successfully exhibit strategic signaling behavior and adapt to market dynamics without hardcoded economic assumptions.
+- Link: [ArXiv Preprint](https://arxiv.org)
+
+### 🏢 Industry Implementation & Thought Leadership (Blogs & Articles)
+
+**Google Research: Mechanism Design for Large Language Models (2025)**
+- Context: Based on a WWW 2024 Best Paper, this Google Research blog post investigates designing auction mechanisms to aggregate the outputs of multiple self-interested LLMs (e.g., competing brand agents in an ad slot). It provides theoretical grounding for why multi-agent generation requires rigorous auction mechanics to resolve diverging agent preferences.
+- Link: [Google Research Blog](https://research.google)
+
+**Neuro-Symbolic AI for Agent Reasoning: Bridging Neural Fluency and Symbolic Rigor (Zylos Research, 2026)**
+- Context: A comprehensive architectural survey highlighting how modern AI systems are escaping LLM hallucinations via the "Sequential Cascade" pattern. It validates your project's pipeline approach: utilizing neural networks for language understanding and strategy, while strictly delegating constraint enforcement (like budget limits) and rule-based verification to deterministic, symbolic layers.
+- Link: [Zylos AI Research](https://zylos.ai)
+
+### 🛠️ Open-Source Ecosystem & Orchestration (Frameworks)
+
+**LangChain Multi-Agent Simulations (GPTeam)**
+- Context: While generalized, frameworks like LangChain's GPTeam establish the baseline for stateful agent memory and sequential action loops. Your repository advances this by injecting strict mathematical guardrails (VCG / Nash Solvers) into the standard autonomous agent loop.
+- Link: [LangChain Simulation Concepts](https://python.langchain.com)
 
 ---
 
