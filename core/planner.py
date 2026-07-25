@@ -5,6 +5,8 @@ recent market history into a planning prompt, and the model reasons about
 the best tactical posture before the agent synthesizes a numerical bid.
 """
 
+import re
+import json
 import logging
 from typing import List, Dict, Any
 
@@ -92,9 +94,9 @@ class StrategyPlanner:
                 response = await self.llm.async_chat_completion(
                     messages=messages,
                     temperature=0.3,
-                    max_tokens=10,
+                    max_tokens=30,
                 )
-                strategy = response.content.strip().lower()
+                strategy = self._extract_strategy(response.content.strip().lower())
             except Exception as e:
                 logger.warning(f"Planner LLM call failed: {e}. Defaulting to balanced.")
                 span.set_attribute("planner.strategy", "balanced")
@@ -112,6 +114,37 @@ class StrategyPlanner:
             span.set_attribute("planner.strategy", "balanced")
             span.set_attribute("planner.fallback", True)
             return "balanced"
+
+    @staticmethod
+    def _extract_strategy(raw: str) -> str:
+        """Extract strategy word from LLM output, handling JSON wrappers."""
+        # Try plain single-word first
+        if raw in VALID_STRATEGIES:
+            return raw
+
+        # Try extracting from JSON object like {"tactical_posture": "conservative"}
+        match = re.search(r'\{.*\}', raw, re.DOTALL)
+        if match:
+            try:
+                obj = json.loads(match.group(0))
+                # Check common key names
+                for key in ("strategy", "tactical_posture", "posture", "action", "value"):
+                    if key in obj:
+                        val = str(obj[key]).strip().lower()
+                        if val in VALID_STRATEGIES:
+                            return val
+                        # Check aliases
+                        if val in STRATEGY_ALIASES:
+                            return STRATEGY_ALIASES[val]
+            except json.JSONDecodeError:
+                pass
+
+        # Try regex for any strategy word in the raw text
+        for word in ["aggressive", "balanced", "conservative", "conserve"]:
+            if word in raw:
+                return word
+
+        return raw  # Return as-is, caller will handle invalid
 
     @staticmethod
     def compute_recent_win_rate(
