@@ -1,0 +1,586 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Nash Auction — AI Observability Platform</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+    * { box-sizing: border-box; }
+    body { font-family: 'Inter', system-ui, sans-serif; }
+    .mono { font-family: 'JetBrains Mono', monospace; }
+
+    /* Glassmorphism cards */
+    .glass {
+      background: rgba(17, 24, 39, 0.7);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border: 1px solid rgba(255,255,255,0.06);
+      box-shadow: inset 0 1px 0 0 rgba(255,255,255,0.04), 0 4px 24px rgba(0,0,0,0.3);
+    }
+    .glass-inner {
+      background: rgba(31, 41, 55, 0.5);
+      border: 1px solid rgba(255,255,255,0.04);
+      box-shadow: inset 0 1px 0 0 rgba(255,255,255,0.03);
+    }
+
+    /* Agent card states */
+    .agent-card {
+      transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+      border: 1px solid rgba(255,255,255,0.06);
+    }
+    .agent-card.thinking {
+      border-color: rgba(59,130,246,0.5);
+      box-shadow: 0 0 20px rgba(59,130,246,0.15), inset 0 1px 0 0 rgba(59,130,246,0.1);
+      animation: thinking-pulse 2s ease-in-out infinite;
+    }
+    .agent-card.won {
+      border-color: rgba(34,197,94,0.4);
+      background: linear-gradient(135deg, rgba(6,78,59,0.8) 0%, rgba(5,46,22,0.9) 100%);
+      box-shadow: 0 0 24px rgba(34,197,94,0.12), inset 0 1px 0 0 rgba(34,197,94,0.1);
+    }
+    .agent-card.lost {
+      border-color: rgba(239,68,68,0.3);
+      background: linear-gradient(135deg, rgba(127,29,29,0.6) 0%, rgba(107,28,28,0.7) 100%);
+      box-shadow: 0 0 24px rgba(239,68,68,0.08), inset 0 1px 0 0 rgba(239,68,68,0.08);
+    }
+    @keyframes thinking-pulse {
+      0%, 100% { box-shadow: 0 0 20px rgba(59,130,246,0.15), inset 0 1px 0 0 rgba(59,130,246,0.1); }
+      50% { box-shadow: 0 0 32px rgba(59,130,246,0.25), inset 0 1px 0 0 rgba(59,130,246,0.15); }
+    }
+
+    /* Strategy badge colors */
+    .badge-aggressive { background: rgba(239,68,68,0.15); color: #fca5a5; border: 1px solid rgba(239,68,68,0.2); }
+    .badge-balanced { background: rgba(59,130,246,0.15); color: #93c5fd; border: 1px solid rgba(59,130,246,0.2); }
+    .badge-conservative { background: rgba(34,197,94,0.15); color: #86efac; border: 1px solid rgba(34,197,94,0.2); }
+    .badge-conserve { background: rgba(34,197,94,0.15); color: #86efac; border: 1px solid rgba(34,197,94,0.2); }
+
+    /* Status indicator pulse */
+    @keyframes status-pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
+    .status-streaming { animation: status-pulse 1.5s ease-in-out infinite; }
+
+    /* Log entry animation */
+    .log-entry { animation: log-slide-in 0.25s ease-out; }
+    @keyframes log-slide-in { from { opacity: 0; transform: translateX(-8px); } to { opacity: 1; transform: translateX(0); } }
+
+    /* Number count-up animation */
+    .count-up { transition: all 0.6s cubic-bezier(0.4, 0, 0.2, 1); }
+
+    /* Scrollbar */
+    ::-webkit-scrollbar { width: 6px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: #374151; border-radius: 3px; }
+    ::-webkit-scrollbar-thumb:hover { background: #4b5563; }
+
+    /* Chart container */
+    .chart-container { position: relative; height: 180px; }
+
+    /* Download button */
+    .download-btn {
+      opacity: 0; pointer-events: none; transition: all 0.3s ease;
+    }
+    .download-btn.visible {
+      opacity: 1; pointer-events: auto;
+    }
+  </style>
+</head>
+<body class="bg-gray-950 text-gray-100 min-h-screen">
+
+  <!-- Header -->
+  <header class="border-b border-gray-800/60 px-6 py-3 glass sticky top-0 z-50">
+    <div class="flex items-center justify-between">
+      <div class="flex items-center gap-4">
+        <div class="flex items-center gap-2">
+          <svg width="28" height="28" viewBox="0 0 28 28" fill="none">
+            <rect width="28" height="28" rx="6" fill="url(#logo-grad)"/>
+            <path d="M8 14L12 10L16 14L20 8" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            <circle cx="20" cy="8" r="2" fill="white"/>
+            <path d="M8 18H20" stroke="white" stroke-width="1.5" stroke-linecap="round" opacity="0.5"/>
+            <defs><linearGradient id="logo-grad" x1="0" y1="0" x2="28" y2="28"><stop stop-color="#3b82f6"/><stop offset="1" stop-color="#8b5cf6"/></linearGradient></defs>
+          </svg>
+          <h1 class="text-base font-bold tracking-tight">Nash <span class="text-blue-400">Auction</span></h1>
+        </div>
+        <div class="flex items-center gap-2 ml-2">
+          <div class="w-2 h-2 rounded-full bg-gray-600" id="status-dot"></div>
+          <span class="text-xs text-gray-500 mono" id="status-text">Idle</span>
+        </div>
+      </div>
+      <div class="flex items-center gap-3">
+        <label class="text-xs text-gray-500">Backend
+          <select id="backend" class="ml-1 bg-gray-800/80 border border-gray-700/60 rounded px-2 py-1 text-xs mono focus:outline-none focus:border-blue-500/60 transition">
+            <option value="ollama">Ollama</option>
+            <option value="mock">Mock</option>
+          </select>
+        </label>
+        <label class="text-xs text-gray-500">Model
+          <select id="model" class="ml-1 bg-gray-800/80 border border-gray-700/60 rounded px-2 py-1 text-xs mono focus:outline-none focus:border-blue-500/60 transition">
+            <option value="qwen2.5:1.5b">qwen2.5:1.5b</option>
+            <option value="tinyllama:latest">tinyllama</option>
+          </select>
+        </label>
+        <label class="text-xs text-gray-500">Agents
+          <input id="num-agents" type="number" min="2" max="10" value="3"
+                 class="w-12 ml-1 bg-gray-800/80 border border-gray-700/60 rounded px-2 py-1 text-xs mono text-center focus:outline-none focus:border-blue-500/60 transition">
+        </label>
+        <label class="text-xs text-gray-500">Rounds
+          <input id="num-rounds" type="number" min="1" max="100" value="3"
+                 class="w-12 ml-1 bg-gray-800/80 border border-gray-700/60 rounded px-2 py-1 text-xs mono text-center focus:outline-none focus:border-blue-500/60 transition">
+        </label>
+        <button id="start-btn"
+                class="bg-blue-600 hover:bg-blue-500 text-white text-xs font-semibold px-4 py-1.5 rounded transition-all duration-200 hover:shadow-lg hover:shadow-blue-500/20">
+          Start Stream
+        </button>
+        <button id="download-btn" class="download-btn bg-gray-800 hover:bg-gray-700 text-gray-300 text-xs font-medium px-3 py-1.5 rounded border border-gray-700/60 transition-all duration-200">
+          <span class="flex items-center gap-1.5">
+            <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M6 1v7M3 5l3 3 3-3M2 9h8" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            Export
+          </span>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <div class="flex h-[calc(100vh-52px)]">
+
+    <!-- Left: Stats + Chart + Agents -->
+    <div class="flex-1 p-5 flex flex-col gap-5 overflow-auto">
+
+      <!-- Market Stats Row -->
+      <div class="grid grid-cols-4 gap-3">
+        <div class="glass rounded-xl p-4">
+          <div class="text-[10px] text-gray-500 uppercase tracking-widest font-medium">Round</div>
+          <div class="text-3xl font-bold mt-1 mono" id="stat-round">—</div>
+        </div>
+        <div class="glass rounded-xl p-4">
+          <div class="text-[10px] text-gray-500 uppercase tracking-widest font-medium">Clearing Price</div>
+          <div class="text-3xl font-bold mt-1 mono text-emerald-400" id="stat-price">—</div>
+        </div>
+        <div class="glass rounded-xl p-4">
+          <div class="text-[10px] text-gray-500 uppercase tracking-widest font-medium">Revenue</div>
+          <div class="text-3xl font-bold mt-1 mono text-amber-400" id="stat-revenue">$0.00</div>
+        </div>
+        <div class="glass rounded-xl p-4">
+          <div class="text-[10px] text-gray-500 uppercase tracking-widest font-medium">Impressions</div>
+          <div class="text-3xl font-bold mt-1 mono text-violet-400" id="stat-impressions">—</div>
+        </div>
+      </div>
+
+      <!-- Live Chart -->
+      <div class="glass rounded-xl p-4">
+        <div class="flex items-center justify-between mb-3">
+          <span class="text-xs text-gray-500 uppercase tracking-widest font-medium">Live Auction Metrics</span>
+          <div class="flex items-center gap-4 text-[10px]">
+            <span class="flex items-center gap-1.5"><span class="w-2 h-2 rounded-full bg-emerald-400"></span> Clearing Price</span>
+            <span class="flex items-center gap-1.5"><span class="w-2 h-2 rounded-full bg-amber-400"></span> Revenue</span>
+          </div>
+        </div>
+        <div class="chart-container">
+          <canvas id="live-chart"></canvas>
+        </div>
+      </div>
+
+      <!-- Agent Grid -->
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3" id="agent-grid"></div>
+    </div>
+
+    <!-- Right: Event Log -->
+    <div class="w-80 border-l border-gray-800/60 flex flex-col glass-inner">
+      <div class="px-4 py-3 border-b border-gray-800/60 flex items-center justify-between">
+        <span class="text-[10px] font-semibold text-gray-500 uppercase tracking-widest">Event Log</span>
+        <span class="text-[10px] text-gray-600 mono" id="event-count">0</span>
+      </div>
+      <div id="event-log" class="flex-1 overflow-y-auto p-3 space-y-1 text-[11px]"></div>
+    </div>
+  </div>
+
+  <script>
+    // ═══════════════════════════════════════════════════════════════════
+    // CONFIG & STATE
+    // ═══════════════════════════════════════════════════════════════════
+    const API_BASE = 'http://localhost:8000';
+    let eventSource = null;
+    let eventCount = 0;
+    let cumulativeRevenue = 0;
+    let connected = false;
+    let roundHistory = [];
+    let allEvents = [];
+    let liveChart = null;
+
+    // Agent color palette
+    const AGENT_COLORS = [
+      '#3b82f6','#f59e0b','#ef4444','#10b981','#8b5cf6',
+      '#ec4899','#06b6d4','#f97316','#14b8a6','#a855f7'
+    ];
+
+    const $ = (id) => document.getElementById(id);
+
+    // ═══════════════════════════════════════════════════════════════════
+    // CHART SETUP
+    // ═══════════════════════════════════════════════════════════════════
+    function initChart() {
+      const ctx = $('live-chart').getContext('2d');
+      liveChart = new Chart(ctx, {
+        type: 'line',
+        data: {
+          labels: [],
+          datasets: [
+            {
+              label: 'Clearing Price',
+              data: [],
+              borderColor: '#34d399',
+              backgroundColor: 'rgba(52,211,153,0.1)',
+              fill: true,
+              tension: 0.4,
+              pointRadius: 5,
+              pointBackgroundColor: '#34d399',
+              pointBorderColor: '#065f46',
+              pointBorderWidth: 2,
+              borderWidth: 2,
+            },
+            {
+              label: 'Cumulative Revenue',
+              data: [],
+              borderColor: '#fbbf24',
+              backgroundColor: 'rgba(251,191,36,0.08)',
+              fill: true,
+              tension: 0.4,
+              pointRadius: 5,
+              pointBackgroundColor: '#fbbf24',
+              pointBorderColor: '#78350f',
+              pointBorderWidth: 2,
+              borderWidth: 2,
+            }
+          ]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          animation: { duration: 600, easing: 'easeInOutQuart' },
+          interaction: { intersect: false, mode: 'index' },
+          plugins: {
+            legend: { display: false },
+            tooltip: {
+              backgroundColor: 'rgba(17,24,39,0.95)',
+              borderColor: 'rgba(255,255,255,0.1)',
+              borderWidth: 1,
+              titleFont: { family: 'JetBrains Mono', size: 11 },
+              bodyFont: { family: 'JetBrains Mono', size: 11 },
+              padding: 10,
+              cornerRadius: 8,
+              callbacks: {
+                label: (ctx) => `  ${ctx.dataset.label}: $${ctx.parsed.y.toFixed(2)}`
+              }
+            }
+          },
+          scales: {
+            x: {
+              grid: { color: 'rgba(255,255,255,0.03)' },
+              ticks: { color: '#6b7280', font: { family: 'JetBrains Mono', size: 10 } }
+            },
+            y: {
+              grid: { color: 'rgba(255,255,255,0.03)' },
+              ticks: {
+                color: '#6b7280',
+                font: { family: 'JetBrains Mono', size: 10 },
+                callback: (v) => '$' + v.toFixed(0)
+              },
+              beginAtZero: true
+            }
+          }
+        }
+      });
+    }
+
+    // ═══════════════════════════════════════════════════════════════════
+    // SVG AVATARS
+    // ═══════════════════════════════════════════════════════════════════
+    function generateAvatar(name, colorIdx) {
+      const colors = ['#3b82f6','#f59e0b','#ef4444','#10b981','#8b5cf6','#ec4899','#06b6d4','#f97316','#14b8a6','#a855f7'];
+      const c = colors[colorIdx % colors.length];
+      // Deterministic shapes from name hash
+      let h = 0;
+      for (let i = 0; i < name.length; i++) h = ((h << 5) - h + name.charCodeAt(i)) | 0;
+      const s1 = Math.abs(h % 360);
+      const s2 = Math.abs((h >> 8) % 360);
+      return `<svg width="32" height="32" viewBox="0 0 32 32" fill="none">
+        <rect width="32" height="32" rx="8" fill="${c}" opacity="0.15"/>
+        <circle cx="${10 + (s1 % 12)}" cy="${10 + (s2 % 12)}" r="5" fill="${c}" opacity="0.6"/>
+        <circle cx="${18 + (s2 % 8)}" cy="${18 + (s1 % 8)}" r="4" fill="${c}" opacity="0.4"/>
+        <text x="16" y="20" text-anchor="middle" fill="white" font-size="12" font-weight="700" font-family="Inter">${name.charAt(0)}</text>
+      </svg>`;
+    }
+
+    // ═══════════════════════════════════════════════════════════════════
+    // COUNT-UP ANIMATION
+    // ═══════════════════════════════════════════════════════════════════
+    function animateValue(el, start, end, prefix = '$', duration = 600) {
+      const startTime = performance.now();
+      function tick(now) {
+        const elapsed = now - startTime;
+        const progress = Math.min(elapsed / duration, 1);
+        const eased = 1 - Math.pow(1 - progress, 3); // ease-out cubic
+        const current = start + (end - start) * eased;
+        el.textContent = prefix + current.toFixed(2);
+        if (progress < 1) requestAnimationFrame(tick);
+      }
+      requestAnimationFrame(tick);
+    }
+
+    // ═══════════════════════════════════════════════════════════════════
+    // CONTROLS
+    // ═══════════════════════════════════════════════════════════════════
+    $('start-btn').addEventListener('click', () => {
+      if (eventSource) eventSource.close();
+      startStream();
+    });
+
+    $('download-btn').addEventListener('click', downloadLogs);
+
+    function startStream() {
+      const n = $('num-agents').value;
+      const r = $('num-rounds').value;
+      const b = $('backend').value;
+      const m = $('model').value;
+      const url = `${API_BASE}/api/v1/simulate/stream?num_agents=${n}&num_rounds=${r}&backend=${b}&model=${encodeURIComponent(m)}`;
+
+      // Reset
+      eventCount = 0;
+      cumulativeRevenue = 0;
+      roundHistory = [];
+      allEvents = [];
+      $('event-log').innerHTML = '';
+      $('event-count').textContent = '0';
+      $('stat-round').textContent = '—';
+      $('stat-price').textContent = '—';
+      $('stat-revenue').textContent = '$0.00';
+      $('stat-impressions').textContent = '—';
+      $('agent-grid').innerHTML = '';
+      $('status-dot').className = 'w-2 h-2 rounded-full bg-yellow-500 status-streaming';
+      $('status-text').textContent = 'Connecting...';
+      $('status-text').className = 'text-xs mono text-yellow-400';
+      $('download-btn').classList.remove('visible');
+
+      if (liveChart) {
+        liveChart.data.labels = [];
+        liveChart.data.datasets[0].data = [];
+        liveChart.data.datasets[1].data = [];
+        liveChart.update('none');
+      }
+
+      eventSource = new EventSource(url);
+
+      eventSource.onopen = () => {
+        connected = true;
+        $('status-dot').className = 'w-2 h-2 rounded-full bg-green-500 status-streaming';
+        $('status-text').textContent = 'Connected';
+        $('status-text').className = 'text-xs mono text-green-400';
+      };
+
+      eventSource.onerror = () => {
+        if (eventSource.readyState === EventSource.CLOSED) return;
+        if (!connected) {
+          $('status-dot').className = 'w-2 h-2 rounded-full bg-yellow-500 status-streaming';
+          $('status-text').textContent = 'Connecting...';
+          $('status-text').className = 'text-xs mono text-yellow-400';
+        }
+      };
+
+      // ── START ──
+      eventSource.addEventListener('start', (e) => {
+        const data = JSON.parse(e.data);
+        connected = true;
+        $('status-dot').className = 'w-2 h-2 rounded-full bg-green-500 status-streaming';
+        $('status-text').textContent = 'Streaming';
+        $('status-text').className = 'text-xs mono text-green-400';
+        renderAgentCards(data.agents);
+        logEvent('start', `Simulation started — ${data.num_rounds} round(s), ${data.agents.length} agents`);
+      });
+
+      // ── AGENT THINKING ──
+      eventSource.addEventListener('agent_thinking', (e) => {
+        const d = JSON.parse(e.data);
+        allEvents.push(d);
+        const card = $(`agent-${CSS.escape(d.agent)}`);
+        if (card) {
+          card.className = card.className.replace(/agent-card\s+/, 'agent-card thinking ');
+          const bidEl = card.querySelector('.agent-bid');
+          if (bidEl) bidEl.textContent = `$${d.bid.toFixed(2)}`;
+          const statusEl = card.querySelector('.agent-status');
+          if (statusEl) {
+            statusEl.textContent = 'thinking';
+            statusEl.className = 'mono agent-status text-[10px] text-blue-400';
+          }
+        }
+        logEvent('agent_thinking', `[R${d.round}] ${d.agent} — bid $${d.bid.toFixed(2)} (${Math.round(d.latency_ms)}ms)`);
+      });
+
+      // ── AGENT DECISION ──
+      eventSource.addEventListener('agent_decision', (e) => {
+        const d = JSON.parse(e.data);
+        allEvents.push(d);
+        updateAgentCard(d);
+        const icon = d.status === 'won' ? '✓' : d.status === 'lost' ? '✗' : '○';
+        logEvent('agent_decision',
+          `[R${d.round}] ${d.agent} ${icon} ${d.status.toUpperCase()} — bid $${d.bid?.toFixed(2) ?? '?'}${d.paid ? ', paid $' + d.paid.toFixed(2) : ''}`);
+      });
+
+      // ── ROUND COMPLETE ──
+      eventSource.addEventListener('round_complete', (e) => {
+        const d = JSON.parse(e.data);
+        allEvents.push(d);
+
+        const prevPrice = roundHistory.length > 0 ? roundHistory[roundHistory.length - 1].price : 0;
+        const prevRevenue = cumulativeRevenue;
+        cumulativeRevenue += d.total_revenue;
+        roundHistory.push({ round: d.round, price: d.clearing_price, revenue: cumulativeRevenue });
+
+        // Animate stats
+        $('stat-round').textContent = d.round;
+        animateValue($('stat-price'), prevPrice, d.clearing_price);
+        animateValue($('stat-revenue'), prevRevenue, cumulativeRevenue);
+        $('stat-impressions').textContent = d.available_impressions;
+
+        // Update chart
+        if (liveChart) {
+          liveChart.data.labels.push(`R${d.round}`);
+          liveChart.data.datasets[0].data.push(d.clearing_price);
+          liveChart.data.datasets[1].data.push(cumulativeRevenue);
+          liveChart.update();
+        }
+
+        logEvent('round_complete',
+          `[R${d.round}] Cleared $${d.clearing_price.toFixed(2)} — ${d.winner_count} won, ${d.loser_count} lost`);
+      });
+
+      // ── COMPLETE ──
+      eventSource.addEventListener('complete', (e) => {
+        connected = false;
+        eventSource.close();
+        $('status-dot').className = 'w-2 h-2 rounded-full bg-gray-500';
+        $('status-text').textContent = 'Finished';
+        $('status-text').className = 'text-xs mono text-gray-500';
+        $('download-btn').classList.add('visible');
+        logEvent('complete', 'Simulation complete');
+      });
+    }
+
+    // ═══════════════════════════════════════════════════════════════════
+    // AGENT CARDS
+    // ═══════════════════════════════════════════════════════════════════
+    function renderAgentCards(agents) {
+      const grid = $('agent-grid');
+      grid.innerHTML = '';
+      agents.forEach((a, i) => {
+        const avatar = generateAvatar(a.name, i);
+        const badgeClass = `badge-${a.role}`;
+        grid.innerHTML += `
+          <div id="agent-${CSS.escape(a.name)}" class="agent-card glass rounded-xl p-4">
+            <div class="flex items-center gap-3 mb-3">
+              ${avatar}
+              <div class="flex-1 min-w-0">
+                <div class="text-sm font-semibold truncate">${a.name}</div>
+                <span class="inline-block text-[10px] px-2 py-0.5 rounded-full mt-0.5 ${badgeClass}">${a.role}</span>
+              </div>
+            </div>
+            <div class="space-y-1.5 text-xs">
+              <div class="flex justify-between">
+                <span class="text-gray-500">Budget</span>
+                <span class="mono agent-budget text-gray-300">$${a.total_budget.toFixed(2)}</span>
+              </div>
+              <div class="flex justify-between">
+                <span class="text-gray-500">Target CPA</span>
+                <span class="mono text-gray-400">$${a.target_cpa.toFixed(2)}</span>
+              </div>
+              <div class="flex justify-between">
+                <span class="text-gray-500">Last Bid</span>
+                <span class="mono agent-bid text-gray-400">—</span>
+              </div>
+              <div class="flex justify-between items-center pt-1 border-t border-white/5">
+                <span class="text-gray-500">Status</span>
+                <span class="mono agent-status text-[10px] text-gray-600">waiting</span>
+              </div>
+            </div>
+          </div>`;
+      });
+    }
+
+    function updateAgentCard(d) {
+      const card = $(`agent-${CSS.escape(d.agent)}`);
+      if (!card) return;
+
+      // Animate budget
+      const budgetEl = card.querySelector('.agent-budget');
+      if (budgetEl && d.remaining_budget != null) {
+        const prev = parseFloat(budgetEl.textContent.replace(/[$,]/g, '')) || 0;
+        animateValue(budgetEl, prev, d.remaining_budget);
+      }
+
+      const bidEl = card.querySelector('.agent-bid');
+      if (bidEl && d.bid != null) bidEl.textContent = `$${d.bid.toFixed(2)}`;
+
+      const statusEl = card.querySelector('.agent-status');
+      if (statusEl) {
+        statusEl.textContent = d.status;
+        statusEl.className = `mono agent-status text-[10px] ${d.status === 'won' ? 'text-emerald-400' : d.status === 'lost' ? 'text-red-400' : 'text-gray-500'}`;
+      }
+
+      // Remove thinking, apply final state
+      card.classList.remove('thinking');
+      if (d.status === 'won') card.classList.add('won');
+      else if (d.status === 'lost') card.classList.add('lost');
+    }
+
+    // ═══════════════════════════════════════════════════════════════════
+    // EVENT LOG
+    // ═══════════════════════════════════════════════════════════════════
+    function logEvent(type, message) {
+      eventCount++;
+      $('event-count').textContent = eventCount;
+
+      const colors = {
+        start: 'text-emerald-400', agent_thinking: 'text-blue-400',
+        agent_decision: 'text-blue-300', round_complete: 'text-amber-400',
+        complete: 'text-gray-400', error: 'text-red-400',
+      };
+      const ts = new Date().toLocaleTimeString('en-GB', { hour12: false });
+      const entry = document.createElement('div');
+      entry.className = 'log-entry py-1 border-b border-white/5';
+      entry.innerHTML = `<span class="text-gray-600 mono">${ts}</span> <span class="${colors[type] || 'text-gray-400'}">${type}</span> <span class="text-gray-300">${message}</span>`;
+      const log = $('event-log');
+      log.appendChild(entry);
+      log.scrollTop = log.scrollHeight;
+    }
+
+    // ═══════════════════════════════════════════════════════════════════
+    // DATA EXPORT
+    // ═══════════════════════════════════════════════════════════════════
+    function downloadLogs() {
+      const data = {
+        metadata: {
+          exported_at: new Date().toISOString(),
+          total_events: eventCount,
+          total_rounds: roundHistory.length,
+          final_revenue: cumulativeRevenue,
+        },
+        rounds: roundHistory,
+        events: allEvents,
+      };
+      const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `nash-auction-${new Date().toISOString().slice(0,19).replace(/:/g,'-')}.json`;
+      a.click();
+      URL.revokeObjectURL(url);
+    }
+
+    // ═══════════════════════════════════════════════════════════════════
+    // INIT
+    // ═══════════════════════════════════════════════════════════════════
+    document.addEventListener('DOMContentLoaded', initChart);
+  </script>
+</body>
+</html>

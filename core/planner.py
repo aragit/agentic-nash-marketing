@@ -13,7 +13,15 @@ from core.llm_engine import BaseLLMEngine
 
 logger = logging.getLogger(__name__)
 
-VALID_STRATEGIES = {"aggressive", "balanced", "conserve"}
+VALID_STRATEGIES = {"aggressive", "balanced", "conserve", "conservative"}
+
+# Map natural language variants to canonical strategy names
+STRATEGY_ALIASES = {
+    "conservative": "conserve",
+    "conserve": "conserve",
+    "aggressive": "aggressive",
+    "balanced": "balanced",
+}
 
 PLANNER_PROMPT = """You are the strategic planner for an AI bidding agent in a real-time ad auction.
 
@@ -94,8 +102,9 @@ class StrategyPlanner:
                 return "balanced"
 
             if strategy in VALID_STRATEGIES:
-                span.set_attribute("planner.strategy", strategy)
-                return strategy
+                canonical = STRATEGY_ALIASES.get(strategy, strategy)
+                span.set_attribute("planner.strategy", canonical)
+                return canonical
 
             logger.warning(
                 f"Planner returned invalid strategy '{strategy}'. Defaulting to balanced."
