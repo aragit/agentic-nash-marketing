@@ -24,7 +24,23 @@
   <img src="https://img.shields.io/badge/License-MIT-green" alt="MIT">
 </p>
 
-Autonomous AI brand agents compete in real-time ad auctions using a **neuro-symbolic architecture**. Each agent runs a three-layer pipeline: a **Neural Strategic Planner** (LLM) reasons about budget state, win rates, and market dynamics to select a tactical strategy; a **Neural Bid Synthesizer** (Ollama/vLLM) generates structured JSON bids with justification; and a **Symbolic Guardrail Engine** enforces budget caps and risk thresholds before a **VCG second-price auction mechanism** mathematically guarantees fair, incentive-compatible pricing. A **vectorized Nash equilibrium solver** (NumPy) computes optimal mixed strategies post-hoc. The entire pipeline is instrumented with **OpenTelemetry distributed tracing** and streams per-agent events in real-time via **Server-Sent Events** to a live Tailwind dashboard with Chart.js visualizations.
+Agentic Nash Marketing bridges the gap between neural generative AI and game-theoretic rigor. It provides an end-to-end multi-agent framework where autonomous AI brand agents compete in real-time ad auctions—combining LLM strategic reasoning with hard mathematical verification to eliminate budget overruns, bidding instability, and hallucination risks.
+
+### 💡 The 3-Layer Neuro-Symbolic Loop
+
+Rather than relying on unconstrained LLM outputs, every decision executes through a closed-loop neuro-symbolic pipeline:
+
+1. **Neural Strategic Planner (LLM):** Analyzes multi-turn market history, win rates, and budget velocity to dynamically pivot tactical personas (aggressive, balanced, conserve).
+
+2. **Neural Bid Synthesizer (Ollama/vLLM):** Translates high-level tactics into structured, schema-validated JSON bids with contextual justification.
+
+3. **Symbolic Guardrail & VCG Auction:** Deterministic code-level guardrails intercept every bid to enforce strict budget caps before a Vickrey–Clarke–Groves (VCG) second-price mechanism resolves allocations—mathematically guaranteeing dominant-strategy incentive compatibility.
+
+### ⚡ Real-Time Engine & System Observability
+
+- **Vectorized Nash Solver:** A post-hoc NumPy Monte Carlo solver computes optimal mixed-strategy game-theoretic equilibria across agents in sub-second runtimes.
+- **Non-Blocking SSE Streaming:** Powered by `asyncio.wait(FIRST_COMPLETED)`, the simulation yields per-agent events in real time, keeping HTTP/SSE channels active during heavy local LLM inference.
+- **Full Stack Observability:** Fully instrumented with OpenTelemetry distributed tracing and paired with a real-time TailwindCSS dashboard featuring dual-axis Chart.js metric visualizations.
 
 ---
 
