@@ -222,36 +222,50 @@
     // ═══════════════════════════════════════════════════════════════════
     function initChart() {
       const ctx = $('live-chart').getContext('2d');
+
+      // Gradient fills
+      const priceGradient = ctx.createLinearGradient(0, 0, 0, 180);
+      priceGradient.addColorStop(0, 'rgba(16, 185, 129, 0.30)');
+      priceGradient.addColorStop(1, 'rgba(16, 185, 129, 0.0)');
+
+      const revenueGradient = ctx.createLinearGradient(0, 0, 0, 180);
+      revenueGradient.addColorStop(0, 'rgba(234, 179, 8, 0.30)');
+      revenueGradient.addColorStop(1, 'rgba(234, 179, 8, 0.0)');
+
       liveChart = new Chart(ctx, {
         type: 'line',
         data: {
           labels: [],
           datasets: [
             {
-              label: 'Clearing Price',
+              label: 'Clearing Price ($)',
               data: [],
-              borderColor: '#34d399',
-              backgroundColor: 'rgba(52,211,153,0.1)',
-              fill: true,
+              borderColor: '#10b981',
+              backgroundColor: priceGradient,
+              borderWidth: 2.5,
               tension: 0.4,
-              pointRadius: 5,
-              pointBackgroundColor: '#34d399',
+              fill: true,
+              yAxisID: 'yPrice',
+              pointRadius: 4,
+              pointBackgroundColor: '#10b981',
               pointBorderColor: '#065f46',
               pointBorderWidth: 2,
-              borderWidth: 2,
+              pointHoverRadius: 6,
             },
             {
-              label: 'Cumulative Revenue',
+              label: 'Revenue ($)',
               data: [],
-              borderColor: '#fbbf24',
-              backgroundColor: 'rgba(251,191,36,0.08)',
-              fill: true,
+              borderColor: '#eab308',
+              backgroundColor: revenueGradient,
+              borderWidth: 2.5,
               tension: 0.4,
-              pointRadius: 5,
-              pointBackgroundColor: '#fbbf24',
-              pointBorderColor: '#78350f',
+              fill: true,
+              yAxisID: 'yRevenue',
+              pointRadius: 4,
+              pointBackgroundColor: '#eab308',
+              pointBorderColor: '#713f12',
               pointBorderWidth: 2,
-              borderWidth: 2,
+              pointHoverRadius: 6,
             }
           ]
         },
@@ -277,17 +291,24 @@
           },
           scales: {
             x: {
-              grid: { color: 'rgba(255,255,255,0.03)' },
-              ticks: { color: '#6b7280', font: { family: 'JetBrains Mono', size: 10 } }
+              grid: { color: 'rgba(255,255,255,0.04)' },
+              ticks: { color: '#9ca3af', font: { family: 'JetBrains Mono', size: 10 } }
             },
-            y: {
-              grid: { color: 'rgba(255,255,255,0.03)' },
-              ticks: {
-                color: '#6b7280',
-                font: { family: 'JetBrains Mono', size: 10 },
-                callback: (v) => '$' + v.toFixed(0)
-              },
-              beginAtZero: true
+            yPrice: {
+              type: 'linear',
+              position: 'left',
+              title: { display: true, text: 'Clearing Price ($)', color: '#10b981', font: { family: 'Inter', size: 10 } },
+              grid: { color: 'rgba(255,255,255,0.04)' },
+              ticks: { color: '#10b981', font: { family: 'JetBrains Mono', size: 10 }, callback: (v) => '$' + v.toFixed(0) },
+              beginAtZero: true,
+            },
+            yRevenue: {
+              type: 'linear',
+              position: 'right',
+              title: { display: true, text: 'Revenue ($)', color: '#eab308', font: { family: 'Inter', size: 10 } },
+              grid: { drawOnChartArea: false },
+              ticks: { color: '#eab308', font: { family: 'JetBrains Mono', size: 10 }, callback: (v) => '$' + v.toFixed(0) },
+              beginAtZero: true,
             }
           }
         }
