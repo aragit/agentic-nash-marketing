@@ -339,6 +339,7 @@ class OllamaEngine(BaseLLMEngine):
                 model=self.model,
                 messages=messages,
                 options={"temperature": temperature, "num_predict": max_tokens},
+                format="json",
             )
             latency_ms = (time.time() - start) * 1000
 

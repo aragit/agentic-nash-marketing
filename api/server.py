@@ -1,6 +1,7 @@
 """FastAPI SSE server for streaming auction simulations.
 
-Run with: uvicorn api.server:app --reload
+Run with:
+    uvicorn api.server:app --reload --reload-exclude="*.log" --reload-exclude="*.db" --reload-exclude="*.json" --reload-exclude=".git/*"
 """
 
 import json

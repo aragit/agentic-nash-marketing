@@ -426,13 +426,15 @@
         allEvents.push(d);
         const card = $(`agent-${CSS.escape(d.agent)}`);
         if (card) {
-          card.className = card.className.replace(/agent-card\s+/, 'agent-card thinking ');
+          // Reset stale won/lost, apply thinking state
+          card.classList.remove('won', 'lost');
+          card.classList.add('thinking');
           const bidEl = card.querySelector('.agent-bid');
           if (bidEl) bidEl.textContent = `$${d.bid.toFixed(2)}`;
           const statusEl = card.querySelector('.agent-status');
           if (statusEl) {
-            statusEl.textContent = 'thinking';
-            statusEl.className = 'mono agent-status text-[10px] text-blue-400';
+            statusEl.textContent = 'THINKING...';
+            statusEl.className = 'mono agent-status text-[10px] font-semibold text-blue-400';
           }
         }
         logEvent('agent_thinking', `[R${d.round}] ${d.agent} — bid $${d.bid.toFixed(2)} (${Math.round(d.latency_ms)}ms)`);
@@ -544,12 +546,20 @@
 
       const statusEl = card.querySelector('.agent-status');
       if (statusEl) {
-        statusEl.textContent = d.status;
-        statusEl.className = `mono agent-status text-[10px] ${d.status === 'won' ? 'text-emerald-400' : d.status === 'lost' ? 'text-red-400' : 'text-gray-500'}`;
+        statusEl.textContent = d.status.toUpperCase();
+        // Reset all status classes, then apply the correct one
+        statusEl.className = 'mono agent-status text-[10px] font-semibold';
+        if (d.status === 'won') {
+          statusEl.classList.add('text-emerald-400');
+        } else if (d.status === 'lost') {
+          statusEl.classList.add('text-rose-400');
+        } else {
+          statusEl.classList.add('text-gray-500');
+        }
       }
 
-      // Remove thinking, apply final state
-      card.classList.remove('thinking');
+      // Reset ALL card state classes, then apply the correct one
+      card.classList.remove('thinking', 'won', 'lost');
       if (d.status === 'won') card.classList.add('won');
       else if (d.status === 'lost') card.classList.add('lost');
     }

@@ -1,5 +1,6 @@
 """Brand agent definitions for the Nash marketing auction."""
 
+import re
 import json
 import logging
 from typing import Dict, Any, List, Optional
@@ -10,6 +11,25 @@ from core.prompts import BrandPrompt
 from core.planner import StrategyPlanner
 
 logger = logging.getLogger(__name__)
+
+
+def _extract_json(raw: str) -> Dict[str, Any]:
+    """Extract a JSON object from LLM output that may contain markdown wrappers.
+
+    Handles: plain JSON, ```json fenced blocks, extra text around the object,
+    trailing commas, and single-quoted strings.
+    """
+    # Strip markdown code fences
+    cleaned = re.sub(r"```(?:json)?\s*", "", raw)
+    cleaned = re.sub(r"```", "", cleaned)
+    # Extract the first { ... } block
+    match = re.search(r"\{.*\}", cleaned, re.DOTALL)
+    if not match:
+        raise json.JSONDecodeError("No JSON object found in LLM output", raw, 0)
+    candidate = match.group(0)
+    # Remove trailing commas before } or ]
+    candidate = re.sub(r",\s*([}\]])", r"\1", candidate)
+    return json.loads(candidate)
 
 
 @dataclass
@@ -126,7 +146,7 @@ class BrandAgent:
                     temperature=0.7,
                     max_tokens=256,
                 )
-                strategy = json.loads(response.content)
+                strategy = _extract_json(response.content)
             except (json.JSONDecodeError, Exception) as e:
                 logger.warning(f"[{self.name}] LLM parse failed: {e}. Using fallback.")
                 strategy = self._fallback_strategy(market_price)
