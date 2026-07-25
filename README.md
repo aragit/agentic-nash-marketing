@@ -1,19 +1,26 @@
 <h1 align="center">Agentic Nash Marketing</h1>
-<p align="center"><b>Neuro-Symbolic Multi-Agent Competitive Ad Auction with Nash Equilibrium</b></p>
-
-<p align="center"><sub>FastAPI · Server-Sent Events (SSE) · TailwindCSS · Ollama · vLLM · NumPy · OpenTelemetry</sub></p>
 
 <p align="center">
   <img src="assets/ban.png" alt="Agentic Nash Marketing Banner" width="100%">
 </p>
 
+<p align="center"><b>Neuro-Symbolic Multi-Agent Competitive Ad Auction with Nash Equilibrium</b></p>
+<p align="center"><sub>FastAPI · Server-Sent Events · SQLAlchemy · OpenTelemetry · Ollama · vLLM · NumPy · SciPy · Chart.js · TailwindCSS · Docker</sub></p>
+
 <p align="center">
   <img src="https://img.shields.io/badge/Status-Production%20Ready-brightgreen" alt="Production Ready">
   <img src="https://img.shields.io/badge/Python-3.12+-blue?logo=python" alt="Python">
-  <img src="https://img.shields.io/badge/FastAPI-0.110+-teal?logo=fastapi" alt="FastAPI">
+  <img src="https://img.shields.io/badge/FastAPI-0.115+-teal?logo=fastapi" alt="FastAPI">
+  <img src="https://img.shields.io/badge/Uvicorn-0.32+-indigo?logo=uvicorn" alt="Uvicorn">
+  <img src="https://img.shields.io/badge/SQLAlchemy-2.0+-red?logo=sqlalchemy" alt="SQLAlchemy">
+  <img src="https://img.shields.io/badge/Pydantic-2.0+-green?logo=pydantic" alt="Pydantic">
   <img src="https://img.shields.io/badge/Streaming-SSE%20Enabled-orange" alt="SSE">
-  <img src="https://img.shields.io/badge/LLM-Mock%20%7C%20Ollama%20%7C%20vLLM-yellow" alt="LLM Backends">
+  <img src="https://img.shields.io/badge/LLM-Ollama%20%7C%20vLLM%20%7C%20Mock-yellow" alt="LLM Backends">
+  <img src="https://img.shields.io/badge/NumPy-1.24+-blue" alt="NumPy">
+  <img src="https://img.shields.io/badge/SciPy-1.10+-blue" alt="SciPy">
+  <img src="https://img.shields.io/badge/OTel-Tracing-brightgreen" alt="OpenTelemetry">
   <img src="https://img.shields.io/badge/Tests-92%20Passing-brightgreen?logo=pytest" alt="Tests">
+  <img src="https://img.shields.io/badge/Docker-Ready-blue?logo=docker" alt="Docker">
   <img src="https://img.shields.io/badge/License-MIT-green" alt="MIT">
 </p>
 
