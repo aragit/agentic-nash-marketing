@@ -237,7 +237,7 @@ python scripts/demo_terminal_tracing.py
 
 ## 🚀 Quick Start
 
-### 🐳 Docker (Recommended)
+### Docker (Recommended)
 
 ```bash
 git clone https://github.com/aragit/nash-marketing-agents.git
@@ -247,7 +247,7 @@ docker-compose up --build
 
 Open `http://localhost:8000` for the dashboard.
 
-### 💻 Local Development
+### Local Development
 
 ```bash
 python -m venv venv
@@ -256,7 +256,7 @@ pip install -r requirements.txt
 uvicorn api.main:app --reload
 ```
 
-### 🔄 SSE Streaming Dashboard
+### SSE Streaming Dashboard
 
 ```bash
 # Start the SSE server
@@ -265,7 +265,7 @@ uvicorn api.server:app --reload
 # Open dashboard.html directly in your browser (no web server needed)
 ```
 
-### 🤖 With Ollama
+### With Ollama
 
 ```bash
 # Start Ollama with a model
@@ -277,7 +277,7 @@ uvicorn api.server:app --reload
 
 Or select the Ollama backend directly from the dashboard UI dropdown.
 
-### 🚀 With vLLM
+### With vLLM
 
 ```bash
 # Start vLLM server (separate process)
@@ -352,7 +352,7 @@ uvicorn api.server:app --reload
 
 ## 📡 API Reference
 
-### 📡 SSE Streaming Endpoint
+### SSE Streaming Endpoint
 
 ```
 GET /api/v1/simulate/stream
@@ -445,7 +445,7 @@ Contributions are welcome. Here's how to get started:
 
 Agentic Nash Marketing builds upon cutting-edge research at the intersection of large language models, game theory, and neuro-symbolic multi-agent systems. Below are key resources from 2024–2026 that validate and inform this architecture.
 
-### 🔬 Core Mechanism Design & Market Simulation (Papers)
+### Core Mechanism Design & Market Simulation (Papers)
 
 **Autobidding Auctions with LLM-Powered Creatives (2026)**
 - Context: This research models online advertising as a Stackelberg game involving budget-constrained autobidding agents. It explores how platforms and agents handle the computational costs and latency of LLMs in real-time auctions by using a "predict-then-execute" workflow.
@@ -459,7 +459,7 @@ Agentic Nash Marketing builds upon cutting-edge research at the intersection of 
 - Context: Introduced at the AAAI 2025 Workshop on Economics of Modern ML, this paper validates the use of LLMs as proxies for human economic agents in second-price auction simulations. It demonstrates how LLM agents successfully exhibit strategic signaling behavior and adapt to market dynamics without hardcoded economic assumptions.
 - Link: [ArXiv Preprint](https://arxiv.org)
 
-### 🏢 Industry Implementation & Thought Leadership (Blogs & Articles)
+### Industry Implementation & Thought Leadership (Blogs & Articles)
 
 **Google Research: Mechanism Design for Large Language Models (2025)**
 - Context: Based on a WWW 2024 Best Paper, this Google Research blog post investigates designing auction mechanisms to aggregate the outputs of multiple self-interested LLMs (e.g., competing brand agents in an ad slot). It provides theoretical grounding for why multi-agent generation requires rigorous auction mechanics to resolve diverging agent preferences.
@@ -469,7 +469,7 @@ Agentic Nash Marketing builds upon cutting-edge research at the intersection of 
 - Context: A comprehensive architectural survey highlighting how modern AI systems are escaping LLM hallucinations via the "Sequential Cascade" pattern. It validates your project's pipeline approach: utilizing neural networks for language understanding and strategy, while strictly delegating constraint enforcement (like budget limits) and rule-based verification to deterministic, symbolic layers.
 - Link: [Zylos AI Research](https://zylos.ai)
 
-### 🛠️ Open-Source Ecosystem & Orchestration (Frameworks)
+### Open-Source Ecosystem & Orchestration (Frameworks)
 
 **LangChain Multi-Agent Simulations (GPTeam)**
 - Context: While generalized, frameworks like LangChain's GPTeam establish the baseline for stateful agent memory and sequential action loops. Your repository advances this by injecting strict mathematical guardrails (VCG / Nash Solvers) into the standard autonomous agent loop.
